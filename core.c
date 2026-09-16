@@ -31,32 +31,48 @@ enum {
     RIN_UNICODE_WCTRANS_TOUPPER = 2
 };
 
-static size_t rin_unicode_strlen_c(const char* s) {
-    size_t len = 0;
-    if (!s) return 0;
-    while (s[len] != '\0') len++;
-    return len;
+static int rin_unicode_cstring_length(const char* s, size_t* length_out) {
+    size_t length;
+    if (!s || !length_out) return 0;
+    for (length = 0u; length < RIN_UNICODE_MAX_CSTRING_BYTES; ++length) {
+        if (s[length] == '\0') {
+            *length_out = length;
+            return 1;
+        }
+    }
+    return 0;
 }
 
-static size_t rin_unicode_strlen32(const uint32_t* s) {
-    size_t len = 0;
-    if (!s) return 0;
-    while (s[len] != 0u) len++;
-    return len;
+static int rin_unicode_wstring_length(const uint32_t* s,
+                                      size_t* length_out) {
+    size_t length;
+    if (!s || !length_out) return 0;
+    for (length = 0u; length < RIN_UNICODE_MAX_WSTRING_ELEMENTS;
+         ++length) {
+        if (s[length] == 0u) {
+            *length_out = length;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static int rin_unicode_ascii_ieq(const char* lhs, const char* rhs) {
-    size_t i = 0;
-    if (!lhs || !rhs) return 0;
-    while (lhs[i] != '\0' && rhs[i] != '\0') {
+    size_t lhs_length;
+    size_t rhs_length;
+    size_t i;
+    if (!rin_unicode_cstring_length(lhs, &lhs_length) ||
+        !rin_unicode_cstring_length(rhs, &rhs_length) ||
+        lhs_length != rhs_length)
+        return 0;
+    for (i = 0u; i < lhs_length; ++i) {
         char a = lhs[i];
         char b = rhs[i];
         if (a >= 'A' && a <= 'Z') a = (char)(a - 'A' + 'a');
         if (b >= 'A' && b <= 'Z') b = (char)(b - 'A' + 'a');
         if (a != b) return 0;
-        i++;
     }
-    return lhs[i] == '\0' && rhs[i] == '\0';
+    return 1;
 }
 
 static void rin_unicode_reset_state(rin_unicode_mbstate_t* ps) {
@@ -895,7 +911,16 @@ size_t rin_unicode_normalize_utf32(uint32_t* dest, size_t dest_cap, const uint32
         if (dest && dest_cap > 0u) dest[0] = 0u;
         return (size_t)-1;
     }
-    if (src_len == (size_t)-1) src_len = rin_unicode_strlen32(src);
+    if (src_len != (size_t)-1 &&
+        src_len > RIN_UNICODE_MAX_WSTRING_ELEMENTS) {
+        if (dest && dest_cap > 0u) dest[0] = 0u;
+        return (size_t)-1;
+    }
+    if (src_len == (size_t)-1 &&
+        !rin_unicode_wstring_length(src, &src_len)) {
+        if (dest && dest_cap > 0u) dest[0] = 0u;
+        return (size_t)-1;
+    }
     for (i = 0u; i < src_len; ++i) {
         if (!rin_unicode_is_valid_scalar(src[i])) {
             if (dest && dest_cap > 0u) dest[0] = 0u;
@@ -924,7 +949,10 @@ size_t rin_unicode_normalize_utf8(char* dest, size_t dest_cap, const char* src, 
         if (dest && dest_cap > 0u) dest[0] = '\0';
         return (size_t)-1;
     }
-    source_len = rin_unicode_strlen_c(src);
+    if (!rin_unicode_cstring_length(src, &source_len)) {
+        if (dest && dest_cap > 0u) dest[0] = '\0';
+        return (size_t)-1;
+    }
     while (cursor < source_len) {
         uint32_t cp = 0u;
         uint32_t segment[RIN_UNICODE_DECOMP_SEGMENT];
@@ -983,12 +1011,15 @@ typedef struct RinUnicodeTransformIterator {
 
 static int rin_unicode_iterator_fill_utf8(RinUnicodeTransformIterator* it) {
     uint32_t cp = 0u;
+    size_t source_length;
     size_t consumed = 0u;
     uint32_t segment[RIN_UNICODE_DECOMP_SEGMENT];
     size_t seg_len = 0u;
     size_t i;
     if (!it || !it->utf8 || *it->utf8 == '\0') return 0;
-    if (rin_unicode_decode_utf8(it->utf8, rin_unicode_strlen_c(it->utf8), &cp, &consumed) != RIN_UNICODE_OK) {
+    if (!rin_unicode_cstring_length(it->utf8, &source_length) ||
+        rin_unicode_decode_utf8(it->utf8, source_length, &cp, &consumed) !=
+            RIN_UNICODE_OK) {
         it->utf8++;
         cp = 0xFFFDu;
         consumed = 0u;
@@ -1045,11 +1076,17 @@ static int rin_unicode_iterator_next(RinUnicodeTransformIterator* it, uint32_t* 
 size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32_t* src) {
     RinUnicodeTransformIterator it;
     size_t out_len = 0u;
+    size_t source_length;
     uint32_t cp = 0u;
     it.utf8 = (const char*)0;
     it.utf32 = src;
     it.queue_length = it.queue_index = 0u;
     it.utf8_mode = 0;
+    if (src && !rin_unicode_wstring_length(src, &source_length)) {
+        if (dest && dest_cap > 0u) dest[0] = 0u;
+        return (size_t)-1;
+    }
+    out_len = 0u;
     while (rin_unicode_iterator_next(&it, &cp)) {
         if (dest && out_len + 1u < dest_cap) dest[out_len] = cp;
         out_len++;
@@ -1064,11 +1101,17 @@ size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32
 size_t rin_unicode_transform_utf8(char* dest, size_t dest_cap, const char* src) {
     RinUnicodeTransformIterator it;
     size_t out_len = 0u;
+    size_t source_length;
     uint32_t cp = 0u;
     it.utf8 = src;
     it.utf32 = (const uint32_t*)0;
     it.queue_length = it.queue_index = 0u;
     it.utf8_mode = 1;
+    if (src && !rin_unicode_cstring_length(src, &source_length)) {
+        if (dest && dest_cap > 0u) dest[0] = '\0';
+        return (size_t)-1;
+    }
+    out_len = 0u;
     while (rin_unicode_iterator_next(&it, &cp)) {
         if (rin_unicode_append_utf8_cstring(dest, dest_cap, &out_len, cp) !=
             RIN_UNICODE_OK) {
@@ -1090,6 +1133,12 @@ int rin_unicode_compare_utf32(const uint32_t* lhs, const uint32_t* rhs) {
     uint32_t right = 0u;
     int has_left;
     int has_right;
+    size_t ignored_length;
+    if (!rin_unicode_wstring_length(lhs, &ignored_length))
+        return rhs && rin_unicode_wstring_length(rhs, &ignored_length)
+                   ? -1
+                   : 0;
+    if (!rin_unicode_wstring_length(rhs, &ignored_length)) return 1;
     a.utf8 = (const char*)0;
     a.utf32 = lhs;
     a.queue_length = a.queue_index = 0u;
@@ -1116,6 +1165,12 @@ int rin_unicode_compare_utf8(const char* lhs, const char* rhs) {
     uint32_t right = 0u;
     int has_left;
     int has_right;
+    size_t ignored_length;
+    if (!rin_unicode_cstring_length(lhs ? lhs : "", &ignored_length))
+        return rhs && rin_unicode_cstring_length(rhs, &ignored_length)
+                   ? -1
+                   : 0;
+    if (!rin_unicode_cstring_length(rhs ? rhs : "", &ignored_length)) return 1;
     a.utf8 = lhs ? lhs : "";
     a.utf32 = (const uint32_t*)0;
     a.queue_length = a.queue_index = 0u;
@@ -1242,26 +1297,33 @@ int rin_unicode_wctomb32(char* dest, uint32_t wc) {
 size_t rin_unicode_mbstowcs32(uint32_t* dest, const char* src, size_t n) {
     const char* cursor = src;
     size_t out_len = 0u;
+    size_t source_len;
     rin_unicode_mbstate_t st;
     rin_unicode_reset_state(&st);
-    if (!src) return (size_t)-1;
-    while (*cursor != '\0' && (dest == (uint32_t*)0 || out_len < n)) {
+    if (!src || !rin_unicode_cstring_length(src, &source_len))
+        return (size_t)-1;
+    while ((size_t)(cursor - src) < source_len &&
+           (dest == (uint32_t*)0 || out_len < n)) {
         uint32_t cp = 0u;
-        size_t rc = rin_unicode_mbrtowc32(&cp, cursor, rin_unicode_strlen_c(cursor), &st);
+        size_t rc = rin_unicode_mbrtowc32(
+            &cp, cursor, source_len - (size_t)(cursor - src), &st);
         if (rc == (size_t)-1 || rc == (size_t)-2) return (size_t)-1;
         if (dest) dest[out_len] = cp;
         out_len++;
         cursor += rc;
     }
-    if (*cursor == '\0' && dest && out_len < n) dest[out_len] = 0u;
+    if ((size_t)(cursor - src) == source_len && dest && out_len < n)
+        dest[out_len] = 0u;
     return out_len;
 }
 
 size_t rin_unicode_wcstombs32(char* dest, const uint32_t* src, size_t n) {
     size_t out_len = 0u;
     size_t i = 0u;
-    if (!src) return (size_t)-1;
-    while (src[i] != 0u) {
+    size_t source_len;
+    if (!src || !rin_unicode_wstring_length(src, &source_len))
+        return (size_t)-1;
+    while (i < source_len) {
         size_t encoded = 0u;
         size_t written = 0u;
         if (rin_unicode_encode_utf8((char*)0, 0u, src[i], &encoded) !=
@@ -1279,25 +1341,29 @@ size_t rin_unicode_wcstombs32(char* dest, const uint32_t* src, size_t n) {
         out_len += encoded;
         i++;
     }
-    if (dest && src[i] == 0u && out_len < n) dest[out_len] = '\0';
+    if (dest && i == source_len && out_len < n) dest[out_len] = '\0';
     return out_len;
 }
 
 size_t rin_unicode_mbsrtowcs32(uint32_t* dest, const char** src, size_t len, rin_unicode_mbstate_t* ps) {
     size_t out_len = 0u;
+    size_t source_len;
     const char* cursor;
     if (!src) return (size_t)-1;
     cursor = *src;
     if (!cursor) return 0u;
-    while (*cursor != '\0' && (dest == (uint32_t*)0 || out_len < len)) {
+    if (!rin_unicode_cstring_length(cursor, &source_len)) return (size_t)-1;
+    while ((size_t)(cursor - *src) < source_len &&
+           (dest == (uint32_t*)0 || out_len < len)) {
         uint32_t cp = 0u;
-        size_t rc = rin_unicode_mbrtowc32(&cp, cursor, rin_unicode_strlen_c(cursor), ps);
+        size_t rc = rin_unicode_mbrtowc32(
+            &cp, cursor, source_len - (size_t)(cursor - *src), ps);
         if (rc == (size_t)-1 || rc == (size_t)-2) return (size_t)-1;
         if (dest) dest[out_len] = cp;
         out_len++;
         cursor += rc;
     }
-    if (*cursor == '\0') {
+    if ((size_t)(cursor - *src) == source_len) {
         if (!dest || out_len < len) {
             if (dest) dest[out_len] = 0u;
             *src = (const char*)0;
@@ -1315,11 +1381,14 @@ size_t rin_unicode_mbsrtowcs32(uint32_t* dest, const char** src, size_t len, rin
 size_t rin_unicode_wcsrtombs32(char* dest, const uint32_t** src, size_t len, rin_unicode_mbstate_t* ps) {
     size_t out_len = 0u;
     const uint32_t* cursor;
+    size_t source_len;
     (void)ps;
     if (!src) return (size_t)-1;
     cursor = *src;
     if (!cursor) return 0u;
-    while (*cursor != 0u) {
+    if (!rin_unicode_wstring_length(cursor, &source_len)) return (size_t)-1;
+    while (out_len < (size_t)-1 &&
+           (size_t)(cursor - *src) < source_len) {
         size_t encoded = 0u;
         size_t written = 0u;
         if (rin_unicode_encode_utf8((char*)0, 0u, *cursor, &encoded) !=
@@ -1335,7 +1404,7 @@ size_t rin_unicode_wcsrtombs32(char* dest, const uint32_t** src, size_t len, rin
         out_len += encoded;
         cursor++;
     }
-    if (*cursor == 0u) {
+    if ((size_t)(cursor - *src) == source_len) {
         if (!dest || out_len < len) {
             if (dest) dest[out_len] = '\0';
             *src = (const uint32_t*)0;

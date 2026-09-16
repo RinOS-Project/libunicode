@@ -71,6 +71,9 @@ enum {
 
 /* Maximum bytes accepted by NUL-terminated locale-name entry points. */
 #define RIN_UNICODE_MAX_LOCALE_NAME_BYTES 128u
+/* Maximum sizes accepted by NUL-terminated text conversion entry points. */
+#define RIN_UNICODE_MAX_CSTRING_BYTES (4u * 1024u * 1024u)
+#define RIN_UNICODE_MAX_WSTRING_ELEMENTS (4u * 1024u * 1024u)
 
 int rin_unicode_is_valid_scalar(uint32_t cp);
 int rin_unicode_validate_utf8(const char* s, size_t n, size_t* valid_prefix);
