@@ -117,6 +117,9 @@ uint32_t rin_unicode_tolower(uint32_t cp);
 uint32_t rin_unicode_toupper(uint32_t cp);
 size_t rin_unicode_casefold_full(uint32_t cp, uint32_t out[3]);
 
+/* Return the required output length.  A null source is treated as empty;
+ * malformed input or an unsupported form returns (size_t)-1 and clears the
+ * first destination element when a destination is supplied. */
 size_t rin_unicode_normalize_utf32(uint32_t* dest, size_t dest_cap, const uint32_t* src, size_t src_len, int form);
 size_t rin_unicode_normalize_utf8(char* dest, size_t dest_cap, const char* src, int form);
 size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32_t* src);

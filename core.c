@@ -695,6 +695,11 @@ static size_t rin_unicode_decompose_scalar(uint32_t cp, int compatibility, uint3
     return offset;
 }
 
+static int rin_unicode_normalization_form_valid(int form) {
+    return form >= RIN_UNICODE_NORMALIZE_NFD &&
+           form <= RIN_UNICODE_NORMALIZE_NFKC;
+}
+
 static uint32_t rin_unicode_try_compose(uint32_t lhs, uint32_t rhs) {
     size_t i;
     for (i = 0u; i < g_rin_unicode_decomposition_count; ++i) {
@@ -886,8 +891,16 @@ size_t rin_unicode_normalize_utf32(uint32_t* dest, size_t dest_cap, const uint32
         if (dest && dest_cap > 0u) dest[0] = 0u;
         return 0u;
     }
+    if (!rin_unicode_normalization_form_valid(form)) {
+        if (dest && dest_cap > 0u) dest[0] = 0u;
+        return (size_t)-1;
+    }
     if (src_len == (size_t)-1) src_len = rin_unicode_strlen32(src);
     for (i = 0u; i < src_len; ++i) {
+        if (!rin_unicode_is_valid_scalar(src[i])) {
+            if (dest && dest_cap > 0u) dest[0] = 0u;
+            return (size_t)-1;
+        }
         rin_unicode_normalize_one(dest, dest_cap ? dest_cap - 1u : 0u, &out_len, &last_cp, &has_last, src[i], form);
     }
     if (dest && dest_cap > 0u) {
@@ -907,6 +920,10 @@ size_t rin_unicode_normalize_utf8(char* dest, size_t dest_cap, const char* src, 
         if (dest && dest_cap > 0u) dest[0] = '\0';
         return 0u;
     }
+    if (!rin_unicode_normalization_form_valid(form)) {
+        if (dest && dest_cap > 0u) dest[0] = '\0';
+        return (size_t)-1;
+    }
     source_len = rin_unicode_strlen_c(src);
     while (cursor < source_len) {
         uint32_t cp = 0u;
@@ -916,8 +933,10 @@ size_t rin_unicode_normalize_utf8(char* dest, size_t dest_cap, const char* src, 
         size_t index;
         if (rin_unicode_decode_utf8(src + cursor, source_len - cursor,
                                     &cp, &consumed) != RIN_UNICODE_OK ||
-            consumed == 0u)
-            break;
+            consumed == 0u) {
+            if (dest && dest_cap > 0u) dest[0] = '\0';
+            return (size_t)-1;
+        }
         segment_len = rin_unicode_decompose_scalar(
             cp, form == RIN_UNICODE_NORMALIZE_NFKC ||
                     form == RIN_UNICODE_NORMALIZE_NFKD,
