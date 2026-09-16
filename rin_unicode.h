@@ -69,6 +69,9 @@ enum {
     RIN_UNICODE_LINE_BREAK_MANDATORY = 2
 };
 
+/* Maximum bytes accepted by NUL-terminated locale-name entry points. */
+#define RIN_UNICODE_MAX_LOCALE_NAME_BYTES 128u
+
 int rin_unicode_is_valid_scalar(uint32_t cp);
 int rin_unicode_validate_utf8(const char* s, size_t n, size_t* valid_prefix);
 

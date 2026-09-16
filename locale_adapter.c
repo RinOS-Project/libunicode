@@ -68,6 +68,19 @@ static int rin_unicode_ascii_ieq(char const* lhs, char const* rhs)
     return lhs[i] == '\0' && rhs[i] == '\0';
 }
 
+static int rin_unicode_locale_name_length(char const* name, size_t* length_out)
+{
+    size_t length;
+    if (!name || !length_out) return 0;
+    for (length = 0u; length < RIN_UNICODE_MAX_LOCALE_NAME_BYTES; ++length) {
+        if (name[length] == '\0') {
+            *length_out = length;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int rin_unicode_ascii_all_alpha(char const* text)
 {
     size_t i = 0u;
@@ -215,7 +228,11 @@ static RinUnicodeLocale const* rin_unicode_find_locale_by_parts(char const* lang
 static RinUnicodeLocale const* rin_unicode_find_locale(char const* name)
 {
     RinUnicodeParsedLocale parsed;
-    if (!name || name[0] == '\0' ||
+    size_t ignored_length;
+    if (!name) return g_locale_root;
+    if (!rin_unicode_locale_name_length(name, &ignored_length))
+        return (RinUnicodeLocale const*)0;
+    if (name[0] == '\0' ||
         rin_unicode_ascii_ieq(name, "C") ||
         rin_unicode_ascii_ieq(name, "POSIX") ||
         rin_unicode_ascii_ieq(name, "root")) {
