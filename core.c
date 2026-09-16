@@ -404,6 +404,132 @@ size_t rin_unicode_grapheme_prev(const char* s, size_t n, size_t offset) {
     return cursor;
 }
 
+static int rin_unicode_line_break_is_hard(uint32_t cp) {
+    return cp == 0x000Au || cp == 0x000Du || cp == 0x0085u ||
+           cp == 0x2028u || cp == 0x2029u;
+}
+
+static int rin_unicode_line_break_is_space(uint32_t cp) {
+    if (cp == 0x0009u || cp == 0x0020u || cp == 0x1680u ||
+        (cp >= 0x2000u && cp <= 0x200Au) || cp == 0x202Fu ||
+        cp == 0x205Fu || cp == 0x3000u)
+        return 1;
+    return 0;
+}
+
+static int rin_unicode_line_break_is_extend(uint32_t cp) {
+    return rin_unicode_is_combining(cp) ||
+           (cp >= 0xFE00u && cp <= 0xFE0Fu) ||
+           (cp >= 0xE0100u && cp <= 0xE01EFu) ||
+           (cp >= 0xE0020u && cp <= 0xE007Fu);
+}
+
+static int rin_unicode_line_break_is_ideographic(uint32_t cp) {
+    return (cp >= 0x3040u && cp <= 0x30FFu) ||
+           (cp >= 0x3400u && cp <= 0x4DBFu) ||
+           (cp >= 0x4E00u && cp <= 0x9FFFu) ||
+           (cp >= 0xF900u && cp <= 0xFAFFu) ||
+           (cp >= 0xAC00u && cp <= 0xD7A3u) ||
+           (cp >= 0x20000u && cp <= 0x2FA1Fu);
+}
+
+static int rin_unicode_line_break_is_open(uint32_t cp) {
+    return cp == 0x0028u || cp == 0x005Bu || cp == 0x007Bu ||
+           cp == 0x3008u || cp == 0x300Au || cp == 0x300Cu ||
+           cp == 0x300Eu || cp == 0x3010u || cp == 0x3014u ||
+           cp == 0x3016u || cp == 0x3018u || cp == 0x301Au ||
+           cp == 0xFF08u || cp == 0xFF3Bu || cp == 0xFF5Bu;
+}
+
+static int rin_unicode_line_break_is_close(uint32_t cp) {
+    return cp == 0x0029u || cp == 0x005Du || cp == 0x007Du ||
+           cp == 0x002Cu || cp == 0x002Eu || cp == 0x003Au ||
+           cp == 0x003Bu || cp == 0x0021u || cp == 0x003Fu ||
+           cp == 0x3001u || cp == 0x3002u || cp == 0x3009u ||
+           cp == 0x300Bu || cp == 0x300Du || cp == 0x300Fu ||
+           cp == 0x3011u || cp == 0x3015u || cp == 0x3017u ||
+           cp == 0x3019u || cp == 0x301Bu || cp == 0xFF09u ||
+           cp == 0xFF0Cu || cp == 0xFF0Eu || cp == 0xFF3Du ||
+           cp == 0xFF5Du;
+}
+
+static int rin_unicode_line_break_is_boundary(const char* s, size_t n,
+                                               size_t offset,
+                                               uint32_t* first,
+                                               uint32_t* last) {
+    size_t start;
+    size_t cursor;
+    int have_scalar = 0;
+    if (!s || offset == 0u || offset > n) return 0;
+    start = rin_unicode_grapheme_prev(s, n, offset);
+    if (start >= offset || rin_unicode_grapheme_next(s, n, start) != offset)
+        return 0;
+    cursor = start;
+    while (cursor < offset) {
+        uint32_t cp = 0u;
+        size_t consumed = 0u;
+        (void)rin_unicode_decode_utf8_lossy(s + cursor, offset - cursor,
+                                           &cp, &consumed);
+        if (consumed == 0u || consumed > offset - cursor) return 0;
+        if (!have_scalar) {
+            if (first) *first = cp;
+            have_scalar = 1;
+        }
+        if (last) *last = cp;
+        cursor += consumed;
+    }
+    return have_scalar && cursor == offset;
+}
+
+int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
+    uint32_t first = 0u;
+    uint32_t previous = 0u;
+    uint32_t next = 0u;
+    size_t next_len = 0u;
+    if (!rin_unicode_line_break_is_boundary(s, n, offset, &first, &previous))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    if (offset >= n) return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    (void)rin_unicode_decode_utf8_lossy(s + offset, n - offset, &next,
+                                       &next_len);
+    if (next_len == 0u) return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    if (rin_unicode_line_break_is_hard(previous))
+        return RIN_UNICODE_LINE_BREAK_MANDATORY;
+    if (rin_unicode_line_break_is_hard(next) ||
+        rin_unicode_line_break_is_extend(next))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    if (first == 0x200Bu || first == 0x00ADu ||
+        rin_unicode_line_break_is_space(first))
+        return RIN_UNICODE_LINE_BREAK_ALLOWED;
+    if (rin_unicode_line_break_is_open(first) ||
+        rin_unicode_line_break_is_close(next))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    if (first == 0x002Du || first == 0x2010u || first == 0x2013u ||
+        first == 0x30A0u || first == 0xFF0Du)
+        return RIN_UNICODE_LINE_BREAK_ALLOWED;
+    if (rin_unicode_line_break_is_ideographic(previous) &&
+        rin_unicode_line_break_is_ideographic(next))
+        return RIN_UNICODE_LINE_BREAK_ALLOWED;
+    if (rin_unicode_line_break_is_close(previous) &&
+        rin_unicode_line_break_is_ideographic(next))
+        return RIN_UNICODE_LINE_BREAK_ALLOWED;
+    return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+}
+
+size_t rin_unicode_line_break_next(const char* s, size_t n, size_t offset) {
+    size_t cursor;
+    if (!s || offset >= n) return n;
+    cursor = offset;
+    while (cursor < n) {
+        size_t next = rin_unicode_grapheme_next(s, n, cursor);
+        if (next <= cursor) break;
+        if (rin_unicode_line_break_opportunity(s, n, next) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED)
+            return next;
+        cursor = next;
+    }
+    return n;
+}
+
 int rin_unicode_encode_utf8(char* dest, size_t n, uint32_t cp, size_t* out_len) {
     size_t needed = 0u;
     if (!out_len) return RIN_UNICODE_INVALID;

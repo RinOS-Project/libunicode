@@ -63,6 +63,12 @@ enum {
     RIN_UNICODE_NO_SPACE = -3
 };
 
+enum {
+    RIN_UNICODE_LINE_BREAK_PROHIBITED = 0,
+    RIN_UNICODE_LINE_BREAK_ALLOWED = 1,
+    RIN_UNICODE_LINE_BREAK_MANDATORY = 2
+};
+
 int rin_unicode_is_valid_scalar(uint32_t cp);
 int rin_unicode_validate_utf8(const char* s, size_t n, size_t* valid_prefix);
 
@@ -83,6 +89,17 @@ int rin_unicode_is_combining(uint32_t cp);
 int rin_unicode_cell_width(uint32_t cp);
 size_t rin_unicode_grapheme_next(const char* s, size_t n, size_t offset);
 size_t rin_unicode_grapheme_prev(const char* s, size_t n, size_t offset);
+
+/* Conservative, allocation-free line-break boundaries for UTF-8 text.  The
+ * opportunity is queried at a grapheme boundary and describes the break
+ * before the scalar at offset.  It covers hard breaks, whitespace, soft
+ * hyphens, common punctuation, and ideographic text.  It is deliberately not
+ * a complete UAX #14 property database; callers needing the full rule set
+ * must keep that policy above this API. */
+int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset);
+/* Return the first allowed or mandatory break after offset, or n when none is
+ * available.  offset is normally a grapheme boundary. */
+size_t rin_unicode_line_break_next(const char* s, size_t n, size_t offset);
 
 int rin_unicode_isalnum(uint32_t cp);
 int rin_unicode_isalpha(uint32_t cp);
