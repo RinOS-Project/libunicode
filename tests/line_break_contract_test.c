@@ -37,17 +37,19 @@ int main(void) {
         return 7;
     if (rin_unicode_line_break_next(family, family_len, 0u) != family_len)
         return 8;
+    if (rin_unicode_line_break_next(family, family_len, 3u) != family_len)
+        return 9;
     if (rin_unicode_line_break_opportunity(punctuation, punctuation_len, 1u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
-        return 9;
+        return 10;
     if (rin_unicode_line_break_opportunity(punctuation, punctuation_len, 5u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
-        return 10;
+        return 11;
     if (rin_unicode_line_break_opportunity(NULL, 0u, 0u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
-        return 11;
+        return 12;
     if (rin_unicode_line_break_opportunity(words, words_len, 1u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
-        return 12;
+        return 13;
     return 0;
 }

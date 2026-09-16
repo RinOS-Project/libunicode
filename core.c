@@ -518,6 +518,9 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
 size_t rin_unicode_line_break_next(const char* s, size_t n, size_t offset) {
     size_t cursor;
     if (!s || offset >= n) return n;
+    if (offset != 0u &&
+        !rin_unicode_line_break_is_boundary(s, n, offset, NULL, NULL))
+        return n;
     cursor = offset;
     while (cursor < n) {
         size_t next = rin_unicode_grapheme_next(s, n, cursor);
