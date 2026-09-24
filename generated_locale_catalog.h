@@ -366,6 +366,19 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         }
     },
     {
+        "he_IL.UTF-8",
+        "he-IL",
+        "he",
+        "IL",
+        "Hebr",
+        "UTF-8",
+        {
+            ".", ",", "\x03", "ILS ", "\xE2\x82\xAA",
+            ".", ",", "\x03", "", "-",
+            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+        }
+    },
+    {
         "hi_IN.UTF-8",
         "hi-IN",
         "hi",
