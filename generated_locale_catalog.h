@@ -353,6 +353,19 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         }
     },
     {
+        "fa_IR.UTF-8",
+        "fa-IR",
+        "fa",
+        "IR",
+        "Arab",
+        "UTF-8",
+        {
+            "\xD9\xAB", "\xD9\xAC", "\x03", "IRR ", "\xD8\xB1\xDB\x8C\xD8\xA7\xD9\x84",
+            "\xD9\xAB", "\xD9\xAC", "\x03", "", "-",
+            2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
+        }
+    },
+    {
         "hi_IN.UTF-8",
         "hi-IN",
         "hi",
