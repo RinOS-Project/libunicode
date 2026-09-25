@@ -208,24 +208,17 @@ int rin_unicode_decode_utf8_lossy(const char* s, size_t n,
     return status;
 }
 
+static int rin_unicode_in_range(uint32_t cp,
+                                const uint32_t (*ranges)[2],
+                                size_t count);
+
 int rin_unicode_is_combining(uint32_t cp) {
-    return (cp >= 0x0300u && cp <= 0x036Fu) ||
-           (cp >= 0x0483u && cp <= 0x0489u) ||
-           (cp >= 0x0591u && cp <= 0x05BDu) || cp == 0x05BFu ||
-           (cp >= 0x05C1u && cp <= 0x05C2u) ||
-           (cp >= 0x0610u && cp <= 0x061Au) ||
-           (cp >= 0x064Bu && cp <= 0x065Fu) || cp == 0x0670u ||
-           (cp >= 0x06D6u && cp <= 0x06EDu) ||
-           (cp >= 0x0900u && cp <= 0x0903u) ||
-           (cp >= 0x093Au && cp <= 0x094Fu) ||
-           (cp >= 0x0981u && cp <= 0x0983u) ||
-           (cp >= 0x0E31u && cp <= 0x0E4Eu) ||
-           (cp >= 0x1AB0u && cp <= 0x1AFFu) ||
-           (cp >= 0x1DC0u && cp <= 0x1DFFu) ||
-           (cp >= 0x20D0u && cp <= 0x20FFu) ||
-           (cp >= 0xFE00u && cp <= 0xFE0Fu) ||
-           (cp >= 0xFE20u && cp <= 0xFE2Fu) ||
-           (cp >= 0xE0100u && cp <= 0xE01EFu) ||
+    /* Unicode category M is the product snapshot's source of truth for
+     * zero-width combining marks.  Emoji modifiers are a grapheme Extend
+     * class despite being category Sk, so retain that explicit UAX #29 case. */
+    return rin_unicode_in_range(
+               cp, g_rin_unicode_combining_ranges,
+               g_rin_unicode_combining_range_count) ||
            (cp >= 0x1F3FBu && cp <= 0x1F3FFu);
 }
 
@@ -273,39 +266,9 @@ typedef enum RinGraphemeProperty {
 } RinGraphemeProperty;
 
 static int rin_unicode_is_spacing_mark(uint32_t cp) {
-    return cp == 0x0903u || cp == 0x093Bu ||
-           (cp >= 0x093Eu && cp <= 0x0940u) ||
-           (cp >= 0x0949u && cp <= 0x094Cu) ||
-           (cp >= 0x0982u && cp <= 0x0983u) ||
-           (cp >= 0x09BEu && cp <= 0x09C0u) ||
-           (cp >= 0x09C7u && cp <= 0x09C8u) ||
-           (cp >= 0x09CBu && cp <= 0x09CCu) ||
-           (cp >= 0x0A3Eu && cp <= 0x0A40u) ||
-           cp == 0x0A83u || (cp >= 0x0ABEu && cp <= 0x0AC0u) ||
-           cp == 0x0AC9u || (cp >= 0x0ACBu && cp <= 0x0ACCu) ||
-           (cp >= 0x0B02u && cp <= 0x0B03u) ||
-           (cp >= 0x0B3Eu && cp <= 0x0B40u) ||
-           (cp >= 0x0B47u && cp <= 0x0B48u) ||
-           (cp >= 0x0B4Bu && cp <= 0x0B4Cu) ||
-           (cp >= 0x0BBEu && cp <= 0x0BC2u) ||
-           (cp >= 0x0BC6u && cp <= 0x0BC8u) ||
-           (cp >= 0x0BCAu && cp <= 0x0BCCu) ||
-           (cp >= 0x0C01u && cp <= 0x0C03u) ||
-           (cp >= 0x0C41u && cp <= 0x0C44u) ||
-           (cp >= 0x0C82u && cp <= 0x0C83u) ||
-           cp == 0x0CBEu || (cp >= 0x0CC0u && cp <= 0x0CC4u) ||
-           (cp >= 0x0CC7u && cp <= 0x0CC8u) ||
-           (cp >= 0x0CCAu && cp <= 0x0CCBu) ||
-           (cp >= 0x0D02u && cp <= 0x0D03u) ||
-           (cp >= 0x0D3Eu && cp <= 0x0D40u) ||
-           (cp >= 0x0D46u && cp <= 0x0D48u) ||
-           (cp >= 0x0D4Au && cp <= 0x0D4Cu) ||
-           (cp >= 0x0F3Eu && cp <= 0x0F3Fu) ||
-           cp == 0x102Bu || cp == 0x102Cu || cp == 0x1031u ||
-           cp == 0x1038u || cp == 0x1062u ||
-           (cp >= 0x17B6u && cp <= 0x17C8u) ||
-           (cp >= 0x1A19u && cp <= 0x1A1Au) ||
-           (cp >= 0xA823u && cp <= 0xA824u) || cp == 0xA827u;
+    return rin_unicode_in_range(
+        cp, g_rin_unicode_spacing_mark_ranges,
+        g_rin_unicode_spacing_mark_range_count);
 }
 
 static int rin_unicode_is_prepend(uint32_t cp) {
