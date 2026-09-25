@@ -4,12 +4,35 @@ typedef struct RinUnicodeDecompositionEntry {
     uint32_t codepoint;
     uint8_t length;
     uint8_t compatibility;
-    uint32_t decomposition[3];
+    uint32_t decomposition[18];
 } RinUnicodeDecompositionEntry;
+
+typedef struct RinUnicodeCombiningClassEntry {
+    uint32_t codepoint;
+    uint8_t canonical_class;
+} RinUnicodeCombiningClassEntry;
+
+typedef struct RinUnicodeCompositionEntry {
+    uint32_t first;
+    uint32_t second;
+    uint32_t composed;
+} RinUnicodeCompositionEntry;
+
+typedef struct RinUnicodeCaseMapEntry {
+    uint32_t codepoint;
+    uint32_t mapped;
+} RinUnicodeCaseMapEntry;
+
+typedef struct RinUnicodeCaseFoldEntry {
+    uint32_t codepoint;
+    uint8_t length;
+    uint32_t mapping[3];
+} RinUnicodeCaseFoldEntry;
 
 #include "generated_data.h"
 
-#define RIN_UNICODE_DECOMP_SEGMENT 12u
+#define RIN_UNICODE_DECOMP_SEGMENT 18u
+#define RIN_UNICODE_NORMALIZATION_SEGMENT 64u
 
 enum {
     RIN_UNICODE_WCTYPE_ALNUM = 1,
@@ -670,13 +693,93 @@ int rin_unicode_validate_utf8(const char* s, size_t n, size_t* valid_prefix) {
 }
 
 static const RinUnicodeDecompositionEntry* rin_unicode_find_decomposition(uint32_t cp, int compatibility) {
-    size_t i;
-    for (i = 0u; i < g_rin_unicode_decomposition_count; ++i) {
-        if (g_rin_unicode_decompositions[i].codepoint != cp) continue;
-        if (!compatibility && g_rin_unicode_decompositions[i].compatibility) continue;
-        return &g_rin_unicode_decompositions[i];
+    size_t first = 0u;
+    size_t last = g_rin_unicode_decomposition_count;
+    while (first < last) {
+        size_t middle = first + (last - first) / 2u;
+        const RinUnicodeDecompositionEntry* entry =
+            &g_rin_unicode_decompositions[middle];
+        if (entry->codepoint < cp) {
+            first = middle + 1u;
+        } else if (entry->codepoint > cp) {
+            last = middle;
+        } else {
+            if (!compatibility && entry->compatibility) return (const RinUnicodeDecompositionEntry*)0;
+            return entry;
+        }
     }
     return (const RinUnicodeDecompositionEntry*)0;
+}
+
+static uint8_t rin_unicode_combining_class(uint32_t cp) {
+    size_t first = 0u;
+    size_t last = g_rin_unicode_combining_class_count;
+    while (first < last) {
+        size_t middle = first + (last - first) / 2u;
+        const RinUnicodeCombiningClassEntry* entry =
+            &g_rin_unicode_combining_classes[middle];
+        if (entry->codepoint < cp) {
+            first = middle + 1u;
+        } else if (entry->codepoint > cp) {
+            last = middle;
+        } else {
+            return entry->canonical_class;
+        }
+    }
+    return 0u;
+}
+
+static uint32_t rin_unicode_try_compose(uint32_t lhs, uint32_t rhs) {
+    size_t first = 0u;
+    size_t last = g_rin_unicode_composition_count;
+    while (first < last) {
+        size_t middle = first + (last - first) / 2u;
+        const RinUnicodeCompositionEntry* entry =
+            &g_rin_unicode_compositions[middle];
+        if (entry->first < lhs ||
+            (entry->first == lhs && entry->second < rhs)) {
+            first = middle + 1u;
+        } else if (entry->first > lhs || entry->second > rhs) {
+            last = middle;
+        } else {
+            return entry->composed;
+        }
+    }
+    return 0u;
+}
+
+static uint32_t rin_unicode_case_map(const RinUnicodeCaseMapEntry* entries,
+                                     size_t count, uint32_t cp) {
+    size_t first = 0u;
+    size_t last = count;
+    while (first < last) {
+        size_t middle = first + (last - first) / 2u;
+        if (entries[middle].codepoint < cp) {
+            first = middle + 1u;
+        } else if (entries[middle].codepoint > cp) {
+            last = middle;
+        } else {
+            return entries[middle].mapped;
+        }
+    }
+    return cp;
+}
+
+static const RinUnicodeCaseFoldEntry* rin_unicode_find_casefold(uint32_t cp) {
+    size_t first = 0u;
+    size_t last = g_rin_unicode_casefold_count;
+    while (first < last) {
+        size_t middle = first + (last - first) / 2u;
+        const RinUnicodeCaseFoldEntry* entry = &g_rin_unicode_casefold[middle];
+        if (entry->codepoint < cp) {
+            first = middle + 1u;
+        } else if (entry->codepoint > cp) {
+            last = middle;
+        } else {
+            return entry;
+        }
+    }
+    return (const RinUnicodeCaseFoldEntry*)0;
 }
 
 static size_t rin_unicode_emit_scalar(uint32_t* dest, size_t dest_cap, size_t offset, uint32_t cp) {
@@ -687,22 +790,6 @@ static size_t rin_unicode_emit_scalar(uint32_t* dest, size_t dest_cap, size_t of
 static size_t rin_unicode_decompose_scalar(uint32_t cp, int compatibility, uint32_t* dest, size_t dest_cap, size_t offset) {
     const RinUnicodeDecompositionEntry* entry;
     size_t i;
-    if (compatibility) {
-        if (cp == 0x00A0u || cp == 0x3000u) return rin_unicode_emit_scalar(dest, dest_cap, offset, 0x0020u);
-        if (cp == 0x00B5u) return rin_unicode_decompose_scalar(0x03BCu, compatibility, dest, dest_cap, offset);
-        if (cp == 0x2126u) return rin_unicode_decompose_scalar(0x03A9u, compatibility, dest, dest_cap, offset);
-        if (cp == 0x212Au) return rin_unicode_emit_scalar(dest, dest_cap, offset, 0x004Bu);
-        if (cp == 0x212Bu) return rin_unicode_decompose_scalar(0x00C5u, compatibility, dest, dest_cap, offset);
-        if (cp == 0xFB01u) {
-            offset = rin_unicode_emit_scalar(dest, dest_cap, offset, 0x0066u);
-            return rin_unicode_emit_scalar(dest, dest_cap, offset, 0x0069u);
-        }
-        if (cp == 0xFB02u) {
-            offset = rin_unicode_emit_scalar(dest, dest_cap, offset, 0x0066u);
-            return rin_unicode_emit_scalar(dest, dest_cap, offset, 0x006Cu);
-        }
-        if (cp >= 0xFF01u && cp <= 0xFF5Eu) return rin_unicode_emit_scalar(dest, dest_cap, offset, cp - 0xFEE0u);
-    }
     entry = rin_unicode_find_decomposition(cp, compatibility);
     if (!entry) return rin_unicode_emit_scalar(dest, dest_cap, offset, cp);
     for (i = 0u; i < entry->length; ++i) {
@@ -716,16 +803,6 @@ static int rin_unicode_normalization_form_valid(int form) {
            form <= RIN_UNICODE_NORMALIZE_NFKC;
 }
 
-static uint32_t rin_unicode_try_compose(uint32_t lhs, uint32_t rhs) {
-    size_t i;
-    for (i = 0u; i < g_rin_unicode_decomposition_count; ++i) {
-        const RinUnicodeDecompositionEntry* entry = &g_rin_unicode_decompositions[i];
-        if (entry->compatibility || entry->length != 2u) continue;
-        if (entry->decomposition[0] == lhs && entry->decomposition[1] == rhs) return entry->codepoint;
-    }
-    return 0u;
-}
-
 static int rin_unicode_in_range(uint32_t cp, const uint32_t (*ranges)[2], size_t count) {
     size_t i;
     for (i = 0u; i < count; ++i) {
@@ -735,64 +812,31 @@ static int rin_unicode_in_range(uint32_t cp, const uint32_t (*ranges)[2], size_t
 }
 
 uint32_t rin_unicode_tolower(uint32_t cp) {
-    if (cp >= 0x0041u && cp <= 0x005Au) return cp + 0x20u;
-    if ((cp >= 0x00C0u && cp <= 0x00D6u) || (cp >= 0x00D8u && cp <= 0x00DEu)) return cp + 0x20u;
-    if (cp == 0x0178u) return 0x00FFu;
+    /* UnicodeData has no one-scalar lower mapping for this SpecialCasing
+     * entry; preserve the historical scalar API behavior while full
+     * casefold() still exposes the dotted result. */
     if (cp == 0x0130u) return 0x0069u;
-    if (cp == 0x1E9Eu) return 0x00DFu;
-    if (cp >= 0x0100u && cp <= 0x017Eu && (cp & 1u) == 0u) return cp + 1u;
-    if (cp >= 0x0391u && cp <= 0x03ABu && cp != 0x03A2u) return cp + 0x20u;
-    if (cp == 0x0386u) return 0x03ACu;
-    if (cp == 0x0388u) return 0x03ADu;
-    if (cp == 0x0389u) return 0x03AEu;
-    if (cp == 0x038Au) return 0x03AFu;
-    if (cp == 0x038Cu) return 0x03CCu;
-    if (cp == 0x038Eu) return 0x03CDu;
-    if (cp == 0x038Fu) return 0x03CEu;
-    if (cp == 0x03AAu) return 0x03CAu;
-    if (cp == 0x03ABu) return 0x03CBu;
-    if (cp >= 0x0400u && cp <= 0x040Fu) return cp + 0x50u;
-    if (cp >= 0x0410u && cp <= 0x042Fu) return cp + 0x20u;
-    if (cp >= 0x0460u && cp <= 0x052Eu && (cp & 1u) == 0u) return cp + 1u;
-    if (cp == 0x212Au) return 0x006Bu;
-    return cp;
+    return rin_unicode_case_map(g_rin_unicode_lowercase,
+                                g_rin_unicode_lowercase_count, cp);
 }
 
 uint32_t rin_unicode_toupper(uint32_t cp) {
-    if (cp >= 0x0061u && cp <= 0x007Au) return cp - 0x20u;
-    if ((cp >= 0x00E0u && cp <= 0x00F6u) || (cp >= 0x00F8u && cp <= 0x00FEu)) return cp - 0x20u;
-    if (cp == 0x00FFu) return 0x0178u;
     if (cp == 0x0131u) return 0x0049u;
+    /* Python's full upper() deliberately expands U+00DF; the scalar API
+     * keeps Unicode's simple uppercase mapping. */
     if (cp == 0x00DFu) return 0x1E9Eu;
-    if (cp >= 0x0101u && cp <= 0x017Fu && (cp & 1u) == 1u) return cp - 1u;
-    if (cp >= 0x03B1u && cp <= 0x03CBu) return cp - 0x20u;
-    if (cp == 0x03C2u) return 0x03A3u;
-    if (cp == 0x03ACu) return 0x0386u;
-    if (cp == 0x03ADu) return 0x0388u;
-    if (cp == 0x03AEu) return 0x0389u;
-    if (cp == 0x03AFu) return 0x038Au;
-    if (cp == 0x03CCu) return 0x038Cu;
-    if (cp == 0x03CDu) return 0x038Eu;
-    if (cp == 0x03CEu) return 0x038Fu;
-    if (cp == 0x03CAu) return 0x03AAu;
-    if (cp == 0x03CBu) return 0x03ABu;
-    if (cp >= 0x0450u && cp <= 0x045Fu) return cp - 0x50u;
-    if (cp >= 0x0430u && cp <= 0x044Fu) return cp - 0x20u;
-    if (cp >= 0x0461u && cp <= 0x052Fu && (cp & 1u) == 1u) return cp - 1u;
-    if (cp == 0x03BCu || cp == 0x00B5u) return 0x039Cu;
-    return cp;
+    return rin_unicode_case_map(g_rin_unicode_uppercase,
+                                g_rin_unicode_uppercase_count, cp);
 }
 
 size_t rin_unicode_casefold_full(uint32_t cp, uint32_t out[3]) {
+    const RinUnicodeCaseFoldEntry* entry;
     if (!out) return 0u;
-    if (cp == 0x00DFu || cp == 0x1E9Eu) {
-        out[0] = 0x0073u;
-        out[1] = 0x0073u;
-        return 2u;
-    }
-    if (cp == 0x03A3u || cp == 0x03C2u) {
-        out[0] = 0x03C3u;
-        return 1u;
+    entry = rin_unicode_find_casefold(cp);
+    if (entry) {
+        size_t i;
+        for (i = 0u; i < entry->length; ++i) out[i] = entry->mapping[i];
+        return entry->length;
     }
     out[0] = rin_unicode_tolower(cp);
     return 1u;
@@ -862,142 +906,208 @@ int rin_unicode_isxdigit(uint32_t cp) {
     return 0;
 }
 
-static int rin_unicode_normalize_one(uint32_t* dest, size_t dest_cap, size_t* offset,
-    uint32_t* last_cp, int* has_last, uint32_t cp, int form) {
-    uint32_t segment[RIN_UNICODE_DECOMP_SEGMENT];
-    size_t seg_len = 0u;
-    size_t i;
-    if (!offset) return RIN_UNICODE_INVALID;
-    seg_len = rin_unicode_decompose_scalar(cp,
-        form == RIN_UNICODE_NORMALIZE_NFKC || form == RIN_UNICODE_NORMALIZE_NFKD,
-        segment, RIN_UNICODE_DECOMP_SEGMENT, 0u);
-    if (form == RIN_UNICODE_NORMALIZE_NFC || form == RIN_UNICODE_NORMALIZE_NFKC) {
-        for (i = 0u; i < seg_len; ++i) {
-            uint32_t composed = 0u;
-            if (has_last && *has_last) {
-                composed = rin_unicode_try_compose(*last_cp, segment[i]);
-                if (composed != 0u) {
-                    *last_cp = composed;
-                    if (dest && *offset > 0u && (*offset - 1u) < dest_cap) dest[*offset - 1u] = composed;
-                    continue;
-                }
-            }
-            if (dest && *offset < dest_cap) dest[*offset] = segment[i];
-            if (last_cp) *last_cp = segment[i];
-            if (has_last) *has_last = 1;
-            (*offset)++;
-        }
-        return RIN_UNICODE_OK;
+typedef struct RinUnicodeNormalizationState {
+    uint32_t segment[RIN_UNICODE_NORMALIZATION_SEGMENT];
+    uint8_t classes[RIN_UNICODE_NORMALIZATION_SEGMENT];
+    size_t segment_length;
+    uint32_t* utf32_dest;
+    char* utf8_dest;
+    size_t dest_cap;
+    size_t out_len;
+    int utf8_mode;
+    int compose;
+    int compatibility;
+} RinUnicodeNormalizationState;
+
+static int rin_unicode_normalization_emit(RinUnicodeNormalizationState* state,
+                                           uint32_t cp) {
+    if (!state) return RIN_UNICODE_INVALID;
+    if (state->utf8_mode) {
+        return rin_unicode_append_utf8_cstring(state->utf8_dest,
+                                               state->dest_cap,
+                                               &state->out_len, cp);
     }
-    for (i = 0u; i < seg_len; ++i) {
-        if (dest && *offset < dest_cap) dest[*offset] = segment[i];
-        if (last_cp) *last_cp = segment[i];
-        if (has_last) *has_last = 1;
-        (*offset)++;
+    if (state->utf32_dest && state->dest_cap > 0u &&
+        state->out_len < state->dest_cap - 1u)
+        state->utf32_dest[state->out_len] = cp;
+    if (state->out_len == (size_t)-1) return RIN_UNICODE_NO_SPACE;
+    state->out_len++;
+    return RIN_UNICODE_OK;
+}
+
+static int rin_unicode_normalization_flush(RinUnicodeNormalizationState* state) {
+    size_t i;
+    size_t output_length = 0u;
+    size_t starter = (size_t)-1;
+    uint8_t last_class = 0u;
+    if (!state) return RIN_UNICODE_INVALID;
+
+    for (i = 0u; i < state->segment_length; ++i) {
+        uint32_t cp = state->segment[i];
+        uint8_t canonical_class = state->classes[i];
+        if (state->compose && canonical_class != 0u && starter != (size_t)-1 &&
+            last_class < canonical_class) {
+            uint32_t composed = rin_unicode_try_compose(
+                state->segment[starter], cp);
+            if (composed != 0u) {
+                state->segment[starter] = composed;
+                continue;
+            }
+        }
+        state->segment[output_length] = cp;
+        state->classes[output_length] = canonical_class;
+        if (canonical_class == 0u) {
+            starter = output_length;
+            last_class = 0u;
+        } else {
+            last_class = canonical_class;
+        }
+        output_length++;
+    }
+    for (i = 0u; i < output_length; ++i) {
+        if (rin_unicode_normalization_emit(state, state->segment[i]) !=
+            RIN_UNICODE_OK)
+            return RIN_UNICODE_INVALID;
+    }
+    state->segment_length = 0u;
+    return RIN_UNICODE_OK;
+}
+
+static int rin_unicode_normalization_feed(RinUnicodeNormalizationState* state,
+                                           uint32_t cp) {
+    uint32_t decomposed[RIN_UNICODE_DECOMP_SEGMENT];
+    size_t decomposed_length;
+    if (!state) return RIN_UNICODE_INVALID;
+    decomposed_length = rin_unicode_decompose_scalar(
+        cp, state->compatibility,
+        decomposed, RIN_UNICODE_DECOMP_SEGMENT, 0u);
+    if (decomposed_length > RIN_UNICODE_DECOMP_SEGMENT)
+        return RIN_UNICODE_INVALID;
+    for (size_t index = 0u; index < decomposed_length; ++index) {
+        uint32_t item = decomposed[index];
+        uint8_t canonical_class = rin_unicode_combining_class(item);
+        size_t position;
+        if (canonical_class == 0u && state->segment_length != 0u &&
+            rin_unicode_normalization_flush(state) != RIN_UNICODE_OK)
+            return RIN_UNICODE_INVALID;
+        if (state->segment_length >= RIN_UNICODE_NORMALIZATION_SEGMENT)
+            return RIN_UNICODE_INVALID;
+        position = state->segment_length;
+        if (canonical_class != 0u) {
+            while (position > 0u &&
+                   state->classes[position - 1u] > canonical_class) {
+                state->segment[position] = state->segment[position - 1u];
+                state->classes[position] = state->classes[position - 1u];
+                --position;
+            }
+        }
+        state->segment[position] = item;
+        state->classes[position] = canonical_class;
+        state->segment_length++;
     }
     return RIN_UNICODE_OK;
 }
 
-size_t rin_unicode_normalize_utf32(uint32_t* dest, size_t dest_cap, const uint32_t* src, size_t src_len, int form) {
+static void rin_unicode_normalization_clear_destination(
+    RinUnicodeNormalizationState* state) {
+    if (!state || state->dest_cap == 0u) return;
+    if (state->utf8_mode) {
+        if (state->utf8_dest) state->utf8_dest[0] = '\0';
+    } else if (state->utf32_dest) {
+        state->utf32_dest[0] = 0u;
+    }
+}
+
+static void rin_unicode_normalization_terminate(
+    RinUnicodeNormalizationState* state) {
+    size_t term;
+    if (!state || state->dest_cap == 0u) return;
+    term = state->out_len < state->dest_cap ? state->out_len :
+           state->dest_cap - 1u;
+    if (state->utf8_mode) {
+        if (state->utf8_dest) state->utf8_dest[term] = '\0';
+    } else if (state->utf32_dest) {
+        state->utf32_dest[term] = 0u;
+    }
+}
+
+size_t rin_unicode_normalize_utf32(uint32_t* dest, size_t dest_cap,
+                                   const uint32_t* src, size_t src_len,
+                                   int form) {
+    RinUnicodeNormalizationState state;
     size_t i;
-    size_t out_len = 0u;
-    uint32_t last_cp = 0u;
-    int has_last = 0;
+    state = (RinUnicodeNormalizationState){
+        { 0u }, { 0u }, 0u, dest, (char*)0, dest_cap, 0u, 0,
+        form == RIN_UNICODE_NORMALIZE_NFC ||
+            form == RIN_UNICODE_NORMALIZE_NFKC,
+        form == RIN_UNICODE_NORMALIZE_NFKC ||
+            form == RIN_UNICODE_NORMALIZE_NFKD
+    };
     if (!src) {
-        if (dest && dest_cap > 0u) dest[0] = 0u;
+        rin_unicode_normalization_terminate(&state);
         return 0u;
     }
-    if (!rin_unicode_normalization_form_valid(form)) {
-        if (dest && dest_cap > 0u) dest[0] = 0u;
-        return (size_t)-1;
-    }
-    if (src_len != (size_t)-1 &&
-        src_len > RIN_UNICODE_MAX_WSTRING_ELEMENTS) {
-        if (dest && dest_cap > 0u) dest[0] = 0u;
-        return (size_t)-1;
-    }
-    if (src_len == (size_t)-1 &&
-        !rin_unicode_wstring_length(src, &src_len)) {
-        if (dest && dest_cap > 0u) dest[0] = 0u;
+    if (!rin_unicode_normalization_form_valid(form) ||
+        (src_len != (size_t)-1 &&
+         src_len > RIN_UNICODE_MAX_WSTRING_ELEMENTS) ||
+        (src_len == (size_t)-1 && !rin_unicode_wstring_length(src, &src_len))) {
+        rin_unicode_normalization_clear_destination(&state);
         return (size_t)-1;
     }
     for (i = 0u; i < src_len; ++i) {
-        if (!rin_unicode_is_valid_scalar(src[i])) {
-            if (dest && dest_cap > 0u) dest[0] = 0u;
+        if (!rin_unicode_is_valid_scalar(src[i]) ||
+            rin_unicode_normalization_feed(&state, src[i]) != RIN_UNICODE_OK) {
+            rin_unicode_normalization_clear_destination(&state);
             return (size_t)-1;
         }
-        rin_unicode_normalize_one(dest, dest_cap ? dest_cap - 1u : 0u, &out_len, &last_cp, &has_last, src[i], form);
     }
-    if (dest && dest_cap > 0u) {
-        size_t term = out_len < dest_cap ? out_len : dest_cap - 1u;
-        dest[term] = 0u;
-    }
-    return out_len;
-}
-
-size_t rin_unicode_normalize_utf8(char* dest, size_t dest_cap, const char* src, int form) {
-    size_t out_len = 0u;
-    size_t cursor = 0u;
-    size_t source_len;
-    uint32_t pending = 0u;
-    int has_pending = 0;
-    if (!src) {
-        if (dest && dest_cap > 0u) dest[0] = '\0';
-        return 0u;
-    }
-    if (!rin_unicode_normalization_form_valid(form)) {
-        if (dest && dest_cap > 0u) dest[0] = '\0';
+    if (rin_unicode_normalization_flush(&state) != RIN_UNICODE_OK) {
+        rin_unicode_normalization_clear_destination(&state);
         return (size_t)-1;
     }
-    if (!rin_unicode_cstring_length(src, &source_len)) {
-        if (dest && dest_cap > 0u) dest[0] = '\0';
+    rin_unicode_normalization_terminate(&state);
+    return state.out_len;
+}
+
+size_t rin_unicode_normalize_utf8(char* dest, size_t dest_cap,
+                                  const char* src, int form) {
+    RinUnicodeNormalizationState state;
+    size_t cursor = 0u;
+    size_t source_len;
+    state = (RinUnicodeNormalizationState){
+        { 0u }, { 0u }, 0u, (uint32_t*)0, dest, dest_cap, 0u, 1,
+        form == RIN_UNICODE_NORMALIZE_NFC ||
+            form == RIN_UNICODE_NORMALIZE_NFKC,
+        form == RIN_UNICODE_NORMALIZE_NFKC ||
+            form == RIN_UNICODE_NORMALIZE_NFKD
+    };
+    if (!src) {
+        rin_unicode_normalization_terminate(&state);
+        return 0u;
+    }
+    if (!rin_unicode_normalization_form_valid(form) ||
+        !rin_unicode_cstring_length(src, &source_len)) {
+        rin_unicode_normalization_clear_destination(&state);
         return (size_t)-1;
     }
     while (cursor < source_len) {
         uint32_t cp = 0u;
-        uint32_t segment[RIN_UNICODE_DECOMP_SEGMENT];
         size_t consumed = 0u;
-        size_t segment_len;
-        size_t index;
         if (rin_unicode_decode_utf8(src + cursor, source_len - cursor,
                                     &cp, &consumed) != RIN_UNICODE_OK ||
-            consumed == 0u) {
-            if (dest && dest_cap > 0u) dest[0] = '\0';
+            consumed == 0u || rin_unicode_normalization_feed(&state, cp) !=
+            RIN_UNICODE_OK) {
+            rin_unicode_normalization_clear_destination(&state);
             return (size_t)-1;
-        }
-        segment_len = rin_unicode_decompose_scalar(
-            cp, form == RIN_UNICODE_NORMALIZE_NFKC ||
-                    form == RIN_UNICODE_NORMALIZE_NFKD,
-            segment, RIN_UNICODE_DECOMP_SEGMENT, 0u);
-        for (index = 0u; index < segment_len; ++index) {
-            uint32_t composed = 0u;
-            if ((form == RIN_UNICODE_NORMALIZE_NFC ||
-                 form == RIN_UNICODE_NORMALIZE_NFKC) && has_pending)
-                composed = rin_unicode_try_compose(pending, segment[index]);
-            if (composed != 0u) {
-                pending = composed;
-                continue;
-            }
-            if (has_pending && rin_unicode_append_utf8_cstring(
-                    dest, dest_cap, &out_len, pending) != RIN_UNICODE_OK) {
-                if (dest && dest_cap > 0u) dest[0] = '\0';
-                return (size_t)-1;
-            }
-            pending = segment[index];
-            has_pending = 1;
         }
         cursor += consumed;
     }
-    if (has_pending && rin_unicode_append_utf8_cstring(
-            dest, dest_cap, &out_len, pending) != RIN_UNICODE_OK) {
-        if (dest && dest_cap > 0u) dest[0] = '\0';
+    if (rin_unicode_normalization_flush(&state) != RIN_UNICODE_OK) {
+        rin_unicode_normalization_clear_destination(&state);
         return (size_t)-1;
     }
-    if (dest && dest_cap > 0u) {
-        size_t term = out_len < dest_cap ? out_len : dest_cap - 1u;
-        dest[term] = '\0';
-    }
-    return out_len;
+    rin_unicode_normalization_terminate(&state);
+    return state.out_len;
 }
 
 typedef struct RinUnicodeTransformIterator {
