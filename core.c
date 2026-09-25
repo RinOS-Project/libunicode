@@ -843,55 +843,37 @@ size_t rin_unicode_casefold_full(uint32_t cp, uint32_t out[3]) {
 }
 
 int rin_unicode_isdigit(uint32_t cp) {
-    if (cp >= 0x0030u && cp <= 0x0039u) return 1;
-    if (cp >= 0x0660u && cp <= 0x0669u) return 1;
-    if (cp >= 0x06F0u && cp <= 0x06F9u) return 1;
-    if (cp >= 0x0966u && cp <= 0x096Fu) return 1;
-    if (cp >= 0x0E50u && cp <= 0x0E59u) return 1;
-    if (cp >= 0xFF10u && cp <= 0xFF19u) return 1;
-    return 0;
+    return rin_unicode_in_range(
+        cp, g_rin_unicode_digit_ranges, g_rin_unicode_digit_range_count);
 }
 
 int rin_unicode_isalpha(uint32_t cp) {
-    static const uint32_t alpha_ranges[][2] = {
-        { 0x0041u, 0x005Au }, { 0x0061u, 0x007Au }, { 0x00AAu, 0x00AAu }, { 0x00B5u, 0x00B5u },
-        { 0x00BAu, 0x00BAu }, { 0x00C0u, 0x00D6u }, { 0x00D8u, 0x00F6u }, { 0x00F8u, 0x024Fu },
-        { 0x0250u, 0x02AFu },
-        { 0x0370u, 0x03FFu }, { 0x0400u, 0x052Fu }, { 0x0620u, 0x063Fu }, { 0x0641u, 0x064Au },
-        { 0x066Eu, 0x066Fu }, { 0x0671u, 0x06D3u }, { 0x06D5u, 0x06D5u }, { 0x06E5u, 0x06E6u },
-        { 0x06EEu, 0x06EFu }, { 0x06FAu, 0x06FCu }, { 0x06FFu, 0x06FFu }, { 0x0904u, 0x0939u },
-        { 0x093Du, 0x093Du }, { 0x0950u, 0x0950u }, { 0x0958u, 0x0961u }, { 0x0971u, 0x0980u },
-        { 0x0E01u, 0x0E30u }, { 0x0E32u, 0x0E33u }, { 0x0E40u, 0x0E46u }, { 0x3041u, 0x3096u },
-        { 0x309Du, 0x309Fu }, { 0x30A1u, 0x30FAu }, { 0x30FCu, 0x30FFu }, { 0x3400u, 0x4DBFu },
-        { 0x4E00u, 0x9FFFu }, { 0xAC00u, 0xD7A3u }, { 0xF900u, 0xFAFFu }, { 0x20000u, 0x2A6DFu },
-        { 0x2A700u, 0x2B73Fu }, { 0x2B740u, 0x2B81Fu }, { 0x2B820u, 0x2CEAFu }
-    };
-    return rin_unicode_in_range(cp, alpha_ranges, sizeof(alpha_ranges) / sizeof(alpha_ranges[0]));
+    return rin_unicode_in_range(
+        cp, g_rin_unicode_alpha_ranges, g_rin_unicode_alpha_range_count);
 }
 
 int rin_unicode_isalnum(uint32_t cp) { return rin_unicode_isalpha(cp) || rin_unicode_isdigit(cp); }
 
 int rin_unicode_isblank(uint32_t cp) {
-    static const uint32_t blank_ranges[][2] = {
-        { 0x0009u, 0x0009u }, { 0x0020u, 0x0020u }, { 0x00A0u, 0x00A0u }, { 0x1680u, 0x1680u },
-        { 0x2000u, 0x200Au }, { 0x202Fu, 0x202Fu }, { 0x205Fu, 0x205Fu }, { 0x3000u, 0x3000u }
-    };
-    return rin_unicode_in_range(cp, blank_ranges, sizeof(blank_ranges) / sizeof(blank_ranges[0]));
+    return rin_unicode_in_range(
+        cp, g_rin_unicode_blank_ranges, g_rin_unicode_blank_range_count);
 }
 
 int rin_unicode_iscntrl(uint32_t cp) { return (cp <= 0x001Fu) || (cp >= 0x007Fu && cp <= 0x009Fu); }
 
 int rin_unicode_isspace(uint32_t cp) {
-    static const uint32_t space_ranges[][2] = {
-        { 0x0009u, 0x000Du }, { 0x0020u, 0x0020u }, { 0x0085u, 0x0085u }, { 0x00A0u, 0x00A0u },
-        { 0x1680u, 0x1680u }, { 0x2000u, 0x200Au }, { 0x2028u, 0x2029u }, { 0x202Fu, 0x202Fu },
-        { 0x205Fu, 0x205Fu }, { 0x3000u, 0x3000u }
-    };
-    return rin_unicode_in_range(cp, space_ranges, sizeof(space_ranges) / sizeof(space_ranges[0]));
+    return rin_unicode_in_range(
+        cp, g_rin_unicode_space_ranges, g_rin_unicode_space_range_count);
 }
 
-int rin_unicode_isupper(uint32_t cp) { return rin_unicode_isalpha(cp) && rin_unicode_tolower(cp) != cp; }
-int rin_unicode_islower(uint32_t cp) { return rin_unicode_isalpha(cp) && rin_unicode_toupper(cp) != cp; }
+int rin_unicode_isupper(uint32_t cp) {
+    return rin_unicode_in_range(
+        cp, g_rin_unicode_upper_ranges, g_rin_unicode_upper_range_count);
+}
+int rin_unicode_islower(uint32_t cp) {
+    return rin_unicode_in_range(
+        cp, g_rin_unicode_lower_ranges, g_rin_unicode_lower_range_count);
+}
 int rin_unicode_isprint(uint32_t cp) { return rin_unicode_is_valid_scalar(cp) && !rin_unicode_iscntrl(cp); }
 int rin_unicode_isgraph(uint32_t cp) { return rin_unicode_isprint(cp) && !rin_unicode_isspace(cp); }
 int rin_unicode_ispunct(uint32_t cp) { return rin_unicode_isgraph(cp) && !rin_unicode_isalnum(cp); }
