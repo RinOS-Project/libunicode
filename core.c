@@ -223,18 +223,8 @@ int rin_unicode_is_combining(uint32_t cp) {
 }
 
 static int rin_unicode_is_wide(uint32_t cp) {
-    return cp >= 0x1100u &&
-           (cp <= 0x115Fu || cp == 0x2329u || cp == 0x232Au ||
-            (cp >= 0x2E80u && cp <= 0x303Eu) ||
-            (cp >= 0x3040u && cp <= 0xA4CFu) ||
-            (cp >= 0xAC00u && cp <= 0xD7A3u) ||
-            (cp >= 0xF900u && cp <= 0xFAFFu) ||
-            (cp >= 0xFE10u && cp <= 0xFE19u) ||
-            (cp >= 0xFE30u && cp <= 0xFE6Fu) ||
-            (cp >= 0xFF01u && cp <= 0xFF60u) ||
-            (cp >= 0xFFE0u && cp <= 0xFFE6u) ||
-            (cp >= 0x1F300u && cp <= 0x1FAFFu) ||
-            (cp >= 0x20000u && cp <= 0x3FFFDu));
+    return rin_unicode_in_range(
+        cp, g_rin_unicode_wide_ranges, g_rin_unicode_wide_range_count);
 }
 
 int rin_unicode_cell_width(uint32_t cp) {
