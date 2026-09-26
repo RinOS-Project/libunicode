@@ -413,6 +413,17 @@ static int rin_unicode_line_break_is_space(uint32_t cp) {
     return 0;
 }
 
+static int rin_unicode_valid_wstring(const uint32_t* s,
+                                     size_t* length_out) {
+    size_t length;
+    size_t index;
+    if (!rin_unicode_wstring_length(s, &length)) return 0;
+    for (index = 0u; index < length; ++index)
+        if (!rin_unicode_is_valid_scalar(s[index])) return 0;
+    if (length_out) *length_out = length;
+    return 1;
+}
+
 static int rin_unicode_line_break_is_non_break_space(uint32_t cp) {
     return cp == 0x00A0u || cp == 0x2007u || cp == 0x202Fu;
 }
@@ -1286,11 +1297,9 @@ int rin_unicode_compare_utf32(const uint32_t* lhs, const uint32_t* rhs) {
     int has_left;
     int has_right;
     size_t ignored_length;
-    if (!rin_unicode_wstring_length(lhs, &ignored_length))
-        return rhs && rin_unicode_wstring_length(rhs, &ignored_length)
-                   ? -1
-                   : 0;
-    if (!rin_unicode_wstring_length(rhs, &ignored_length)) return 1;
+    if (!rin_unicode_valid_wstring(lhs, &ignored_length))
+        return rin_unicode_valid_wstring(rhs, &ignored_length) ? -1 : 0;
+    if (!rin_unicode_valid_wstring(rhs, &ignored_length)) return 1;
     a.utf8 = (const char*)0;
     a.utf32 = lhs;
     a.queue_length = a.queue_index = 0u;

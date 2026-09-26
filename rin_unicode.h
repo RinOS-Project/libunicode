@@ -137,6 +137,8 @@ size_t rin_unicode_normalize_utf32(uint32_t* dest, size_t dest_cap, const uint32
 size_t rin_unicode_normalize_utf8(char* dest, size_t dest_cap, const char* src, int form);
 size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32_t* src);
 size_t rin_unicode_transform_utf8(char* dest, size_t dest_cap, const char* src);
+/* Invalid or unbounded UTF-32 input sorts after valid input.  Since this
+ * comparison API has no error result, two invalid inputs compare equal. */
 int rin_unicode_compare_utf32(const uint32_t* lhs, const uint32_t* rhs);
 int rin_unicode_compare_utf8(const char* lhs, const char* rhs);
 
