@@ -413,6 +413,14 @@ static int rin_unicode_line_break_is_space(uint32_t cp) {
     return 0;
 }
 
+static int rin_unicode_line_break_is_non_break_space(uint32_t cp) {
+    return cp == 0x00A0u || cp == 0x2007u || cp == 0x202Fu;
+}
+
+static int rin_unicode_line_break_is_word_joiner(uint32_t cp) {
+    return cp == 0x2060u || cp == 0xFEFFu;
+}
+
 static int rin_unicode_line_break_is_extend(uint32_t cp) {
     return rin_unicode_is_combining(cp) ||
            (cp >= 0xFE00u && cp <= 0xFE0Fu) ||
@@ -490,6 +498,13 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
     if (next_len == 0u) return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (rin_unicode_line_break_is_hard(previous))
         return RIN_UNICODE_LINE_BREAK_MANDATORY;
+    if (rin_unicode_line_break_is_non_break_space(first) ||
+        rin_unicode_line_break_is_non_break_space(previous) ||
+        rin_unicode_line_break_is_non_break_space(next) ||
+        rin_unicode_line_break_is_word_joiner(first) ||
+        rin_unicode_line_break_is_word_joiner(previous) ||
+        rin_unicode_line_break_is_word_joiner(next))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (rin_unicode_line_break_is_hard(next) ||
         rin_unicode_line_break_is_extend(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;

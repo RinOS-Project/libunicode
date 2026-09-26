@@ -11,11 +11,26 @@ int main(void) {
     static const char family[] =
         "\xF0\x9F\x91\xA9\xE2\x80\x8D\xF0\x9F\x91\xA9" "x";
     static const char punctuation[] = "(word)";
+    static const char no_break_space[] =
+        {'a', (char)0xC2, (char)0xA0, 'b'};
+    static const char figure_space[] =
+        {'a', (char)0xE2, (char)0x80, (char)0x87, 'b'};
+    static const char narrow_no_break_space[] =
+        {'a', (char)0xE2, (char)0x80, (char)0xAF, 'b'};
+    static const char word_joiner[] =
+        {'a', (char)0xE2, (char)0x81, (char)0xA0, 'b'};
+    static const char bom_joiner[] =
+        {'a', (char)0xEF, (char)0xBB, (char)0xBF, 'b'};
     size_t words_len = sizeof(words) - 1u;
     size_t hard_len = sizeof(hard_break) - 1u;
     size_t cjk_len = sizeof(cjk) - 1u;
     size_t family_len = sizeof(family) - 1u;
     size_t punctuation_len = sizeof(punctuation) - 1u;
+    size_t no_break_space_len = sizeof(no_break_space);
+    size_t figure_space_len = sizeof(figure_space);
+    size_t narrow_no_break_space_len = sizeof(narrow_no_break_space);
+    size_t word_joiner_len = sizeof(word_joiner);
+    size_t bom_joiner_len = sizeof(bom_joiner);
 
     if (rin_unicode_line_break_opportunity(words, words_len, 5u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
@@ -51,5 +66,36 @@ int main(void) {
     if (rin_unicode_line_break_opportunity(words, words_len, 1u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 13;
+    if (rin_unicode_line_break_opportunity(no_break_space,
+                                          no_break_space_len, 1u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(no_break_space,
+                                           no_break_space_len, 3u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 14;
+    if (rin_unicode_line_break_opportunity(figure_space,
+                                          figure_space_len, 1u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(figure_space,
+                                           figure_space_len, 4u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 15;
+    if (rin_unicode_line_break_opportunity(narrow_no_break_space,
+                                          narrow_no_break_space_len, 1u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(narrow_no_break_space,
+                                           narrow_no_break_space_len, 4u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 16;
+    if (rin_unicode_line_break_opportunity(word_joiner, word_joiner_len, 1u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(word_joiner, word_joiner_len, 4u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 17;
+    if (rin_unicode_line_break_opportunity(bom_joiner, bom_joiner_len, 1u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(bom_joiner, bom_joiner_len, 4u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 18;
     return 0;
 }
