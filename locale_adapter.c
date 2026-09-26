@@ -338,6 +338,16 @@ static int rin_unicode_locale_append_digit(
         "\xDB\xB0", "\xDB\xB1", "\xDB\xB2", "\xDB\xB3", "\xDB\xB4",
         "\xDB\xB5", "\xDB\xB6", "\xDB\xB7", "\xDB\xB8", "\xDB\xB9"
     };
+    static const char devanagari[10][4] = {
+        "\xE0\xA5\xA6", "\xE0\xA5\xA7", "\xE0\xA5\xA8", "\xE0\xA5\xA9",
+        "\xE0\xA5\xAA", "\xE0\xA5\xAB", "\xE0\xA5\xAC", "\xE0\xA5\xAD",
+        "\xE0\xA5\xAE", "\xE0\xA5\xAF"
+    };
+    static const char thai[10][4] = {
+        "\xE0\xB9\x90", "\xE0\xB9\x91", "\xE0\xB9\x92", "\xE0\xB9\x93",
+        "\xE0\xB9\x94", "\xE0\xB9\x95", "\xE0\xB9\x96", "\xE0\xB9\x97",
+        "\xE0\xB9\x98", "\xE0\xB9\x99"
+    };
     const char* text;
     size_t length = 0u;
     size_t index;
@@ -347,6 +357,10 @@ static int rin_unicode_locale_append_digit(
         text = arabic_indic[(unsigned)(digit - '0')];
     else if (rin_unicode_ascii_ieq(selected->language, "fa"))
         text = extended_arabic_indic[(unsigned)(digit - '0')];
+    else if (rin_unicode_ascii_ieq(selected->language, "hi"))
+        text = devanagari[(unsigned)(digit - '0')];
+    else if (rin_unicode_ascii_ieq(selected->language, "th"))
+        text = thai[(unsigned)(digit - '0')];
     else
         text = latin[(unsigned)(digit - '0')];
     while (text[length] != '\0') ++length;
