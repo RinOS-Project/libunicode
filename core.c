@@ -822,6 +822,80 @@ size_t rin_unicode_casefold_full(uint32_t cp, uint32_t out[3]) {
     return 1u;
 }
 
+static int rin_unicode_casefold_locale_valid(const char* locale,
+                                             int* turkic_out) {
+    size_t length;
+    size_t index;
+    unsigned char first;
+    unsigned char second;
+    if (turkic_out == NULL) return 0;
+    *turkic_out = 0;
+    if (locale == NULL || locale[0] == '\0') return 1;
+    if (!rin_unicode_cstring_length(locale, &length) || length == 0u)
+        return 0;
+    first = (unsigned char)locale[0];
+    if (length == 1u) {
+        return (first >= 'A' && first <= 'Z') ||
+               (first >= 'a' && first <= 'z');
+    }
+    second = (unsigned char)locale[1];
+    if (!((first >= 'A' && first <= 'Z') ||
+          (first >= 'a' && first <= 'z')) ||
+        !((second >= 'A' && second <= 'Z') ||
+          (second >= 'a' && second <= 'z')))
+        return 0;
+    if (length > 2u && locale[2] != '-' && locale[2] != '_' &&
+        locale[2] != '.' && locale[2] != '@')
+        return 0;
+    for (index = 2u; index < length; ++index) {
+        const unsigned char byte = (unsigned char)locale[index];
+        const int alpha = (byte >= 'A' && byte <= 'Z') ||
+                          (byte >= 'a' && byte <= 'z');
+        const int digit = byte >= '0' && byte <= '9';
+        if (!alpha && !digit && byte != '-' && byte != '_' &&
+            byte != '.' && byte != '@')
+            return 0;
+        if ((byte == '-' || byte == '_' || byte == '.' || byte == '@') &&
+            (index + 1u == length || locale[index - 1u] == '-' ||
+             locale[index - 1u] == '_' || locale[index - 1u] == '.' ||
+             locale[index - 1u] == '@'))
+            return 0;
+    }
+    *turkic_out = ((first == 't' || first == 'T') &&
+                   (second == 'r' || second == 'R')) ||
+                  ((first == 'a' || first == 'A') &&
+                   (second == 'z' || second == 'Z'));
+    return 1;
+}
+
+size_t rin_unicode_casefold_locale(uint32_t cp, const char* locale,
+                                   uint32_t out[3]) {
+    int turkic = 0;
+    size_t length;
+    if (out == NULL) return 0u;
+    out[0] = 0u;
+    out[1] = 0u;
+    out[2] = 0u;
+    if (!rin_unicode_is_valid_scalar(cp) ||
+        !rin_unicode_casefold_locale_valid(locale, &turkic))
+        return 0u;
+    if (turkic && cp == 0x0049u) {
+        out[0] = 0x0131u;
+        return 1u;
+    }
+    if (turkic && cp == 0x0130u) {
+        out[0] = 0x0069u;
+        return 1u;
+    }
+    length = rin_unicode_casefold_full(cp, out);
+    if (length == 0u) {
+        out[0] = 0u;
+        out[1] = 0u;
+        out[2] = 0u;
+    }
+    return length;
+}
+
 int rin_unicode_isdigit(uint32_t cp) {
     return rin_unicode_in_range(
         cp, g_rin_unicode_digit_ranges, g_rin_unicode_digit_range_count);

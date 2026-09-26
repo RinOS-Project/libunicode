@@ -159,6 +159,13 @@ uint32_t rin_unicode_toupper(uint32_t cp);
 /* Return the full case-fold mapping length, or zero for an invalid scalar.
  * Invalid input clears all three output slots when out is supplied. */
 size_t rin_unicode_casefold_full(uint32_t cp, uint32_t out[3]);
+/* Return the full case-fold mapping for a bounded locale name.  The default
+ * Unicode mapping is used for valid non-Turkic locales; `tr`/`az` (including
+ * their BCP-47 or POSIX suffixes) use the Turkic mappings for U+0049 and
+ * U+0130.  A malformed or overlong locale name, invalid scalar, or null
+ * output returns zero and clears all output slots when an output is supplied. */
+size_t rin_unicode_casefold_locale(uint32_t cp, const char* locale,
+                                   uint32_t out[3]);
 
 /* Return the required output length.  A null source is treated as empty;
  * malformed input or an unsupported form returns (size_t)-1 and clears the
