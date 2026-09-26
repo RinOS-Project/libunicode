@@ -29,6 +29,12 @@ int main(void) {
         {'a', (char)0xE2, (char)0x81, (char)0xA0, 'b'};
     static const char bom_joiner[] =
         {'a', (char)0xEF, (char)0xBB, (char)0xBF, 'b'};
+    static const char word_joiners[][6] = {
+        {'a', (char)0xE2, (char)0x81, (char)0xA1, 'b', '\0'},
+        {'a', (char)0xE2, (char)0x81, (char)0xA2, 'b', '\0'},
+        {'a', (char)0xE2, (char)0x81, (char)0xA3, 'b', '\0'},
+        {'a', (char)0xE2, (char)0x81, (char)0xA4, 'b', '\0'}
+    };
     size_t words_len = sizeof(words) - 1u;
     size_t hard_len = sizeof(hard_break) - 1u;
     size_t cjk_len = sizeof(cjk) - 1u;
@@ -124,5 +130,13 @@ int main(void) {
         rin_unicode_line_break_opportunity(bom_joiner, bom_joiner_len, 4u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 18;
+    for (size_t index = 0u; index < sizeof(word_joiners) /
+                                    sizeof(word_joiners[0]); ++index) {
+        if (rin_unicode_line_break_opportunity(word_joiners[index], 5u, 1u) !=
+                RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+            rin_unicode_line_break_opportunity(word_joiners[index], 5u, 4u) !=
+                RIN_UNICODE_LINE_BREAK_PROHIBITED)
+            return 22;
+    }
     return 0;
 }

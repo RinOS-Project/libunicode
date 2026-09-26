@@ -419,7 +419,8 @@ static int rin_unicode_line_break_is_non_break_space(uint32_t cp) {
 }
 
 static int rin_unicode_line_break_is_word_joiner(uint32_t cp) {
-    return cp == 0x2060u || cp == 0xFEFFu;
+    return cp == 0x2060u || (cp >= 0x2061u && cp <= 0x2064u) ||
+           cp == 0xFEFFu;
 }
 
 static int rin_unicode_line_break_is_extend(uint32_t cp) {
