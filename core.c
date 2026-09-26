@@ -426,7 +426,8 @@ static int rin_unicode_valid_wstring(const uint32_t* s,
 }
 
 static int rin_unicode_line_break_is_non_break_space(uint32_t cp) {
-    return cp == 0x00A0u || cp == 0x2007u || cp == 0x202Fu;
+    return cp == 0x00A0u || cp == 0x2007u || cp == 0x2011u ||
+           cp == 0x202Fu;
 }
 
 static int rin_unicode_line_break_is_word_joiner(uint32_t cp) {

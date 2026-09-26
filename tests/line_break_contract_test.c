@@ -9,7 +9,11 @@ int main(void) {
     static const char hard_break[] = "a\nb";
     static const char vertical_break[] = {'a', '\v', 'b'};
     static const char form_break[] = {'a', '\f', 'b'};
-    static const char cjk[] = "\xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E";
+    static const char cjk[] = {
+        (char)0xE6, (char)0x97, (char)0xA5,
+        (char)0xE6, (char)0x9C, (char)0xAC,
+        (char)0xE8, (char)0xAA, (char)0x9E, '\0'
+    };
     static const char family[] =
         "\xF0\x9F\x91\xA9\xE2\x80\x8D\xF0\x9F\x91\xA9" "x";
     static const char punctuation[] = "(word)";
@@ -19,6 +23,8 @@ int main(void) {
         {'a', (char)0xE2, (char)0x80, (char)0x87, 'b'};
     static const char narrow_no_break_space[] =
         {'a', (char)0xE2, (char)0x80, (char)0xAF, 'b'};
+    static const char non_break_hyphen[] =
+        {'a', (char)0xE2, (char)0x80, (char)0x91, 'b'};
     static const char word_joiner[] =
         {'a', (char)0xE2, (char)0x81, (char)0xA0, 'b'};
     static const char bom_joiner[] =
@@ -31,6 +37,7 @@ int main(void) {
     size_t no_break_space_len = sizeof(no_break_space);
     size_t figure_space_len = sizeof(figure_space);
     size_t narrow_no_break_space_len = sizeof(narrow_no_break_space);
+    size_t non_break_hyphen_len = sizeof(non_break_hyphen);
     size_t word_joiner_len = sizeof(word_joiner);
     size_t bom_joiner_len = sizeof(bom_joiner);
 
@@ -100,6 +107,13 @@ int main(void) {
                                            narrow_no_break_space_len, 4u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 16;
+    if (rin_unicode_line_break_opportunity(non_break_hyphen,
+                                          non_break_hyphen_len, 1u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(non_break_hyphen,
+                                           non_break_hyphen_len, 4u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 21;
     if (rin_unicode_line_break_opportunity(word_joiner, word_joiner_len, 1u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED ||
         rin_unicode_line_break_opportunity(word_joiner, word_joiner_len, 4u) !=
