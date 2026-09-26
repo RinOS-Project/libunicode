@@ -322,6 +322,84 @@ rin_unicode_lconv_t* rin_unicode_localeconv(void)
     return (rin_unicode_lconv_t*)&selected->lconv;
 }
 
+size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
+                                         int64_t value, char const* locale)
+{
+    RinUnicodeLocale const* selected;
+    char digits[32];
+    unsigned char break_before[32] = {0};
+    uint64_t magnitude;
+    size_t digit_count = 0u;
+    size_t remaining;
+    size_t grouping_index = 0u;
+    unsigned int group;
+    size_t written = 0u;
+    size_t index;
+    char const* separator;
+    size_t separator_length = 0u;
+
+    if (output && output_capacity != 0u) output[0] = '\0';
+    if (!output || output_capacity == 0u) return 0u;
+    if (locale) {
+        selected = rin_unicode_find_locale(locale);
+        if (!selected) goto failure;
+    } else {
+        rin_unicode_locale_lock();
+        selected = g_current_locale[LC_NUMERIC];
+        rin_unicode_locale_unlock();
+    }
+    if (!selected || !selected->lconv.thousands_sep ||
+        !selected->lconv.grouping) goto failure;
+
+    magnitude = value < 0 ? (uint64_t)(0u - (uint64_t)value)
+                          : (uint64_t)value;
+    do {
+        digits[digit_count++] = (char)('0' + (magnitude % 10u));
+        magnitude /= 10u;
+    } while (magnitude != 0u && digit_count < sizeof(digits));
+    if (magnitude != 0u) goto failure;
+
+    separator = selected->lconv.thousands_sep;
+    while (separator[separator_length] != '\0') ++separator_length;
+    group = (unsigned char)selected->lconv.grouping[grouping_index];
+    remaining = digit_count;
+    while (group != 0u && group != (unsigned char)127 &&
+           remaining > group) {
+        remaining -= group;
+        break_before[remaining] = 1u;
+        if (selected->lconv.grouping[grouping_index + 1u] == '\0') {
+            /* A zero grouping entry repeats the previous group size. */
+        } else {
+            ++grouping_index;
+        }
+        group = (unsigned char)selected->lconv.grouping[grouping_index];
+        if (group == 0u) group = (unsigned char)127;
+    }
+
+    if (value < 0) {
+        if (written + 1u >= output_capacity) goto failure;
+        output[written++] = '-';
+    }
+    for (index = 0u; index < digit_count; ++index) {
+        size_t separator_end;
+        if (break_before[index]) {
+            if (separator_length > output_capacity - written - 1u)
+                goto failure;
+            for (separator_end = 0u; separator_end < separator_length;
+                 ++separator_end)
+                output[written++] = separator[separator_end];
+        }
+        if (written + 1u >= output_capacity) goto failure;
+        output[written++] = digits[digit_count - index - 1u];
+    }
+    output[written] = '\0';
+    return written;
+
+failure:
+    output[0] = '\0';
+    return 0u;
+}
+
 char const* rin_unicode_locale_name(int category)
 {
     RinUnicodeLocale const* selected;

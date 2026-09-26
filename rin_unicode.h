@@ -158,6 +158,11 @@ uint32_t rin_unicode_towctrans(uint32_t cp, unsigned long desc);
 
 char* rin_unicode_setlocale(int category, const char* locale);
 rin_unicode_lconv_t* rin_unicode_localeconv(void);
+/* Format one signed integer with the selected catalog's grouping separator.
+ * A NULL locale uses the current LC_NUMERIC snapshot.  The output is
+ * failure-atomic and the return value excludes the terminating NUL. */
+size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
+                                         int64_t value, const char* locale);
 const char* rin_unicode_locale_name(int category);
 /* Resolve a bounded POSIX/BCP-47 locale name to the immutable catalog's
  * canonical locale identifier.  The output is cleared on failure. */
