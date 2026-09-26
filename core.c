@@ -401,7 +401,8 @@ size_t rin_unicode_grapheme_prev(const char* s, size_t n, size_t offset) {
 }
 
 static int rin_unicode_line_break_is_hard(uint32_t cp) {
-    return cp == 0x000Au || cp == 0x000Du || cp == 0x0085u ||
+    return cp == 0x000Au || cp == 0x000Bu || cp == 0x000Cu ||
+           cp == 0x000Du || cp == 0x0085u ||
            cp == 0x2028u || cp == 0x2029u;
 }
 

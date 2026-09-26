@@ -7,6 +7,8 @@
 int main(void) {
     static const char words[] = "hello world";
     static const char hard_break[] = "a\nb";
+    static const char vertical_break[] = {'a', '\v', 'b'};
+    static const char form_break[] = {'a', '\f', 'b'};
     static const char cjk[] = "\xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E";
     static const char family[] =
         "\xF0\x9F\x91\xA9\xE2\x80\x8D\xF0\x9F\x91\xA9" "x";
@@ -45,6 +47,17 @@ int main(void) {
         return 4;
     if (rin_unicode_line_break_next(hard_break, hard_len, 0u) != 2u)
         return 5;
+    if (rin_unicode_line_break_opportunity(vertical_break,
+                                           sizeof(vertical_break), 2u) !=
+        RIN_UNICODE_LINE_BREAK_MANDATORY ||
+        rin_unicode_line_break_next(vertical_break,
+                                    sizeof(vertical_break), 0u) != 2u)
+        return 19;
+    if (rin_unicode_line_break_opportunity(form_break,
+                                           sizeof(form_break), 2u) !=
+        RIN_UNICODE_LINE_BREAK_MANDATORY ||
+        rin_unicode_line_break_next(form_break, sizeof(form_break), 0u) != 2u)
+        return 20;
     if (rin_unicode_line_break_opportunity(cjk, cjk_len, 3u) !=
         RIN_UNICODE_LINE_BREAK_ALLOWED)
         return 6;
