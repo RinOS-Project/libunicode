@@ -159,6 +159,10 @@ uint32_t rin_unicode_towctrans(uint32_t cp, unsigned long desc);
 char* rin_unicode_setlocale(int category, const char* locale);
 rin_unicode_lconv_t* rin_unicode_localeconv(void);
 const char* rin_unicode_locale_name(int category);
+/* Resolve a bounded POSIX/BCP-47 locale name to the immutable catalog's
+ * canonical locale identifier.  The output is cleared on failure. */
+int rin_unicode_locale_canonicalize(const char* locale, char* output,
+                                    size_t output_capacity);
 const char* rin_unicode_locale_environment_value(int category);
 const char* rin_unicode_locale_language(void);
 const char* rin_unicode_locale_territory(void);

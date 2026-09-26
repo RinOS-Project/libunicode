@@ -332,6 +332,23 @@ char const* rin_unicode_locale_name(int category)
     return selected->name;
 }
 
+int rin_unicode_locale_canonicalize(char const* locale, char* output,
+                                    size_t output_capacity)
+{
+    RinUnicodeLocale const* selected;
+    size_t length = 0u;
+    size_t i;
+    if (output && output_capacity != 0u) output[0] = '\0';
+    if (!output || output_capacity == 0u || !locale) return 0;
+    selected = rin_unicode_find_locale(locale);
+    if (!selected || !selected->locale_id) return 0;
+    while (selected->locale_id[length] != '\0') ++length;
+    if (length + 1u > output_capacity) return 0;
+    for (i = 0u; i < length; ++i) output[i] = selected->locale_id[i];
+    output[length] = '\0';
+    return 1;
+}
+
 char const* rin_unicode_locale_environment_value(int category)
 {
     RinUnicodeLocale const* selected;
