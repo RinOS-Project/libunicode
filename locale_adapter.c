@@ -1345,6 +1345,275 @@ char const* rin_unicode_locale_time_format(char conversion)
     return result;
 }
 
+static int rin_unicode_datetime_leap_year(int year)
+{
+    return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+}
+
+static int rin_unicode_datetime_days_in_month(int year, int month)
+{
+    static const unsigned char days[12] = {
+        31u, 28u, 31u, 30u, 31u, 30u,
+        31u, 31u, 30u, 31u, 30u, 31u
+    };
+    if (month < 1 || month > 12) return 0;
+    if (month == 2 && rin_unicode_datetime_leap_year(year)) return 29;
+    return days[month - 1];
+}
+
+static int rin_unicode_datetime_valid(const rin_unicode_datetime_t* value,
+                                      unsigned* day_of_year)
+{
+    int month_days;
+    unsigned ordinal = 0u;
+    int month;
+    if (!value || !day_of_year || value->year < 0 || value->year > 9999 ||
+        value->weekday < 0 || value->weekday > 6 || value->hour < 0 ||
+        value->hour > 23 || value->minute < 0 || value->minute > 59 ||
+        value->second < 0 || value->second > 60) return 0;
+    month_days = rin_unicode_datetime_days_in_month(value->year,
+                                                     value->month);
+    if (month_days == 0 || value->day < 1 || value->day > month_days)
+        return 0;
+    for (month = 1; month < value->month; ++month)
+        ordinal += (unsigned)rin_unicode_datetime_days_in_month(
+            value->year, month);
+    *day_of_year = ordinal + (unsigned)value->day;
+    return 1;
+}
+
+static int rin_unicode_datetime_append(char* output, size_t capacity,
+                                       size_t* written, const char* text)
+{
+    size_t length = 0u;
+    size_t index;
+    if (!output || !written || !text || *written >= capacity) return 0;
+    while (length < RIN_UNICODE_MAX_DATETIME_FORMAT_BYTES && text[length] != '\0')
+        ++length;
+    if (length == RIN_UNICODE_MAX_DATETIME_FORMAT_BYTES ||
+        length > capacity - *written - 1u) return 0;
+    for (index = 0u; index < length; ++index)
+        output[(*written)++] = text[index];
+    return 1;
+}
+
+static int rin_unicode_datetime_append_fixed(char* output, size_t capacity,
+                                             size_t* written, unsigned value,
+                                             unsigned width, int blank_pad)
+{
+    char digits[10];
+    unsigned index;
+    if (width == 0u || width > sizeof(digits) ||
+        (width < sizeof(digits) && value >= 1000000000u)) return 0;
+    for (index = width; index != 0u; --index) {
+        digits[index - 1u] = (char)('0' + value % 10u);
+        value /= 10u;
+    }
+    if (value != 0u) return 0;
+    if (blank_pad && width == 2u && digits[0] == '0') {
+        digits[0] = ' ';
+    }
+    if (!output || !written || *written >= capacity ||
+        width > capacity - *written - 1u) return 0;
+    for (index = 0u; index < width; ++index)
+        output[(*written)++] = digits[index];
+    return 1;
+}
+
+static int rin_unicode_datetime_append_pattern(
+    char* output, size_t capacity, size_t* written,
+    const char* pattern, const RinUnicodeTimeNames* names,
+    const rin_unicode_datetime_t* value, unsigned day_of_year,
+    unsigned depth)
+{
+    size_t index = 0u;
+    if (!pattern || !names || !value || depth > 2u) return 0;
+    while (pattern[index] != '\0') {
+        char conversion;
+        const char* nested = (const char*)0;
+        if (pattern[index] != '%') {
+            char literal[2] = {pattern[index], '\0'};
+            if (!rin_unicode_datetime_append(output, capacity, written, literal))
+                return 0;
+            ++index;
+            continue;
+        }
+        conversion = pattern[++index];
+        if (conversion == '\0') return 0;
+        switch (conversion) {
+        case '%':
+            if (!rin_unicode_datetime_append(output, capacity, written, "%"))
+                return 0;
+            break;
+        case 'a':
+            if (!rin_unicode_datetime_append(output, capacity, written,
+                                             names->weekdays_short[value->weekday]))
+                return 0;
+            break;
+        case 'A':
+            if (!rin_unicode_datetime_append(output, capacity, written,
+                                             names->weekdays_long[value->weekday]))
+                return 0;
+            break;
+        case 'b':
+        case 'h':
+            if (!rin_unicode_datetime_append(output, capacity, written,
+                                             names->months_short[value->month - 1]))
+                return 0;
+            break;
+        case 'B':
+            if (!rin_unicode_datetime_append(output, capacity, written,
+                                             names->months_long[value->month - 1]))
+                return 0;
+            break;
+        case 'C':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)(value->year / 100),
+                    2u, 0)) return 0;
+            break;
+        case 'd':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->day, 2u, 0))
+                return 0;
+            break;
+        case 'e':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->day, 2u, 1))
+                return 0;
+            break;
+        case 'F':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->year, 4u, 0) ||
+                !rin_unicode_datetime_append(output, capacity, written, "-") ||
+                !rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->month, 2u, 0) ||
+                !rin_unicode_datetime_append(output, capacity, written, "-") ||
+                !rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->day, 2u, 0))
+                return 0;
+            break;
+        case 'H':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->hour, 2u, 0))
+                return 0;
+            break;
+        case 'I': {
+            unsigned hour = (unsigned)(value->hour % 12);
+            if (hour == 0u) hour = 12u;
+            if (!rin_unicode_datetime_append_fixed(output, capacity, written,
+                                                   hour, 2u, 0)) return 0;
+            break;
+        }
+        case 'j':
+            if (!rin_unicode_datetime_append_fixed(output, capacity, written,
+                                                   day_of_year, 3u, 0)) return 0;
+            break;
+        case 'm':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->month, 2u, 0))
+                return 0;
+            break;
+        case 'M':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->minute, 2u, 0))
+                return 0;
+            break;
+        case 'n':
+            if (!rin_unicode_datetime_append(output, capacity, written, "\n"))
+                return 0;
+            break;
+        case 'p':
+            if (!rin_unicode_datetime_append(output, capacity, written,
+                                             names->am_pm[value->hour >= 12]))
+                return 0;
+            break;
+        case 'R':
+            nested = "%H:%M";
+            break;
+        case 'r':
+            nested = "%I:%M:%S %p";
+            break;
+        case 'S':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->second, 2u, 0))
+                return 0;
+            break;
+        case 'T':
+            nested = "%H:%M:%S";
+            break;
+        case 't':
+            if (!rin_unicode_datetime_append(output, capacity, written, "\t"))
+                return 0;
+            break;
+        case 'u':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written,
+                    (unsigned)(value->weekday == 0 ? 7 : value->weekday),
+                    1u, 0)) return 0;
+            break;
+        case 'w':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->weekday, 1u, 0))
+                return 0;
+            break;
+        case 'x':
+            nested = names->date_format;
+            break;
+        case 'X':
+            nested = names->time_format;
+            break;
+        case 'y':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)(value->year % 100),
+                    2u, 0)) return 0;
+            break;
+        case 'Y':
+            if (!rin_unicode_datetime_append_fixed(
+                    output, capacity, written, (unsigned)value->year, 4u, 0))
+                return 0;
+            break;
+        case 'c':
+            nested = names->date_time_format;
+            break;
+        default:
+            return 0;
+        }
+        if (nested && !rin_unicode_datetime_append_pattern(
+                           output, capacity, written, nested, names, value,
+                           day_of_year, depth + 1u)) return 0;
+        ++index;
+    }
+    return 1;
+}
+
+size_t rin_unicode_locale_format_datetime(
+    char* output, size_t output_capacity,
+    const rin_unicode_datetime_t* value, char conversion)
+{
+    RinUnicodeTimeNames const* names;
+    const char* pattern;
+    unsigned day_of_year;
+    size_t written = 0u;
+    if (output && output_capacity != 0u) output[0] = '\0';
+    if (!output || output_capacity == 0u || !value ||
+        (conversion != 'c' && conversion != 'x' && conversion != 'X') ||
+        !rin_unicode_datetime_valid(value, &day_of_year)) return 0u;
+    rin_unicode_locale_lock();
+    names = rin_unicode_current_time_names_unlocked();
+    pattern = conversion == 'c' ? names->date_time_format
+                                : conversion == 'x' ? names->date_format
+                                                    : names->time_format;
+    rin_unicode_locale_unlock();
+    if (!rin_unicode_datetime_append_pattern(output, output_capacity, &written,
+                                             pattern, names, value,
+                                             day_of_year, 0u)) {
+        output[0] = '\0';
+        return 0u;
+    }
+    output[written] = '\0';
+    return written;
+}
+
 int rin_unicode_strcoll(char const* s1, char const* s2) { return rin_unicode_compare_utf8(s1 ? s1 : "", s2 ? s2 : ""); }
 size_t rin_unicode_strxfrm(char* dest, char const* src, size_t n) { return rin_unicode_transform_utf8(dest, n, src ? src : ""); }
 int rin_unicode_wcscoll32(uint32_t const* s1, uint32_t const* s2) { return rin_unicode_compare_utf32(s1, s2); }
@@ -1363,6 +1632,13 @@ char const* rin_locale_weekday(int weekday, int abbreviated) { return rin_unicod
 char const* rin_locale_month(int month, int abbreviated) { return rin_unicode_locale_month(month, abbreviated); }
 char const* rin_locale_am_pm(int hour) { return rin_unicode_locale_am_pm(hour); }
 char const* rin_locale_time_format(char conversion) { return rin_unicode_locale_time_format(conversion); }
+size_t rin_locale_format_datetime(char* output, size_t output_capacity,
+                                  const rin_unicode_datetime_t* value,
+                                  char conversion)
+{
+    return rin_unicode_locale_format_datetime(output, output_capacity, value,
+                                              conversion);
+}
 
 /* `locale_t` is intentionally opaque at the public boundary, but the libc
  * locale object has a fixed 24-byte representation.  Keep this private view
