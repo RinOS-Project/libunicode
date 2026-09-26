@@ -25,6 +25,14 @@ typedef struct RinUnicodeParsedLocale {
     char region[16];
 } RinUnicodeParsedLocale;
 
+typedef enum RinUnicodeDigitSet {
+    RIN_UNICODE_DIGITS_LATIN = 0,
+    RIN_UNICODE_DIGITS_ARABIC_INDIC,
+    RIN_UNICODE_DIGITS_EXTENDED_ARABIC_INDIC,
+    RIN_UNICODE_DIGITS_DEVANAGARI,
+    RIN_UNICODE_DIGITS_THAI
+} RinUnicodeDigitSet;
+
 static RinUnicodeLocale const* g_locale_root = &g_rin_unicode_generated_locales[0];
 static RinUnicodeLocale const* g_current_locale[LC_MAX] = {
     &g_rin_unicode_generated_locales[0],
@@ -34,6 +42,15 @@ static RinUnicodeLocale const* g_current_locale[LC_MAX] = {
     &g_rin_unicode_generated_locales[0],
     &g_rin_unicode_generated_locales[0],
     &g_rin_unicode_generated_locales[0],
+};
+static RinUnicodeDigitSet g_current_digit_set[LC_MAX] = {
+    RIN_UNICODE_DIGITS_LATIN,
+    RIN_UNICODE_DIGITS_LATIN,
+    RIN_UNICODE_DIGITS_LATIN,
+    RIN_UNICODE_DIGITS_LATIN,
+    RIN_UNICODE_DIGITS_LATIN,
+    RIN_UNICODE_DIGITS_LATIN,
+    RIN_UNICODE_DIGITS_LATIN,
 };
 
 /* The locale catalog is immutable, but the selected category pointers are
@@ -153,6 +170,121 @@ static void rin_unicode_ascii_copy_title(char* dest, size_t cap, char const* src
     dest[i] = '\0';
 }
 
+static int rin_unicode_ascii_token_ieq(char const* text, size_t length,
+                                       char const* expected)
+{
+    size_t index = 0u;
+    if (!text || !expected) return 0;
+    while (expected[index] != '\0') {
+        char actual;
+        char wanted = expected[index];
+        if (index >= length) return 0;
+        actual = text[index];
+        if (actual >= 'A' && actual <= 'Z')
+            actual = (char)(actual - 'A' + 'a');
+        if (wanted >= 'A' && wanted <= 'Z')
+            wanted = (char)(wanted - 'A' + 'a');
+        if (actual != wanted) return 0;
+        ++index;
+    }
+    return index == length;
+}
+
+static int rin_unicode_ascii_token_alnum(char const* text, size_t length)
+{
+    size_t index;
+    if (!text || length == 0u) return 0;
+    for (index = 0u; index < length; ++index) {
+        char ch = text[index];
+        if (!((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+              (ch >= '0' && ch <= '9')))
+            return 0;
+    }
+    return 1;
+}
+
+static int rin_unicode_digit_set_from_token(char const* token, size_t length,
+                                            RinUnicodeDigitSet* digit_set)
+{
+    if (!token || !digit_set || length < 3u || length > 8u ||
+        !rin_unicode_ascii_token_alnum(token, length))
+        return 0;
+    if (rin_unicode_ascii_token_ieq(token, length, "latn"))
+        *digit_set = RIN_UNICODE_DIGITS_LATIN;
+    else if (rin_unicode_ascii_token_ieq(token, length, "arab"))
+        *digit_set = RIN_UNICODE_DIGITS_ARABIC_INDIC;
+    else if (rin_unicode_ascii_token_ieq(token, length, "arabext"))
+        *digit_set = RIN_UNICODE_DIGITS_EXTENDED_ARABIC_INDIC;
+    else if (rin_unicode_ascii_token_ieq(token, length, "deva"))
+        *digit_set = RIN_UNICODE_DIGITS_DEVANAGARI;
+    else if (rin_unicode_ascii_token_ieq(token, length, "thai"))
+        *digit_set = RIN_UNICODE_DIGITS_THAI;
+    else
+        return 0;
+    return 1;
+}
+
+/* Parse only the supported Unicode locale-extension subset.  The base
+ * locale parser intentionally remains product-catalog based, but an
+ * explicit -u-nu-* request must not be silently ignored: unsupported or
+ * malformed numbering systems fail the locale selection. */
+static int rin_unicode_parse_numbering_system(char const* name,
+                                              RinUnicodeDigitSet* digit_set,
+                                              int* has_override)
+{
+    size_t length;
+    size_t position = 0u;
+    int in_unicode_extension = 0;
+    int expecting_numbering_value = 0;
+    int saw_numbering_key = 0;
+    if (!digit_set || !has_override) return 0;
+    *digit_set = RIN_UNICODE_DIGITS_LATIN;
+    *has_override = 0;
+    if (!name) return 1;
+    if (!rin_unicode_locale_name_length(name, &length)) return 0;
+    while (position < length &&
+           (name[position] == ' ' || name[position] == '\t'))
+        ++position;
+    while (position < length && name[position] != '.' && name[position] != '@') {
+        size_t token_start = position;
+        size_t token_length;
+        while (position < length && name[position] != '.' &&
+               name[position] != '@' && name[position] != '-' &&
+               name[position] != '_')
+            ++position;
+        token_length = position - token_start;
+        if (token_length == 0u) {
+            ++position;
+            continue;
+        }
+        if (!in_unicode_extension) {
+            if (token_length == 1u &&
+                rin_unicode_ascii_token_ieq(name + token_start, token_length,
+                                             "u"))
+                in_unicode_extension = 1;
+        } else if (expecting_numbering_value) {
+            if (!rin_unicode_digit_set_from_token(name + token_start,
+                                                   token_length, digit_set))
+                return 0;
+            *has_override = 1;
+            expecting_numbering_value = 0;
+        } else if (token_length == 2u &&
+                   rin_unicode_ascii_token_ieq(name + token_start,
+                                               token_length, "nu")) {
+            if (*has_override || saw_numbering_key) return 0;
+            saw_numbering_key = 1;
+            expecting_numbering_value = 1;
+        } else if (token_length == 1u) {
+            /* A new singleton starts the next extension. */
+            in_unicode_extension = 0;
+        }
+        if (position < length && (name[position] == '-' ||
+                                  name[position] == '_'))
+            ++position;
+    }
+    return !expecting_numbering_value;
+}
+
 static void rin_unicode_parse_locale_name(char const* name, RinUnicodeParsedLocale* parsed)
 {
     size_t index = 0u;
@@ -230,7 +362,7 @@ static RinUnicodeLocale const* rin_unicode_find_locale_by_parts(char const* lang
     return (RinUnicodeLocale const*)0;
 }
 
-static RinUnicodeLocale const* rin_unicode_find_locale(char const* name)
+static RinUnicodeLocale const* rin_unicode_find_locale_base(char const* name)
 {
     RinUnicodeParsedLocale parsed;
     size_t ignored_length;
@@ -248,6 +380,44 @@ static RinUnicodeLocale const* rin_unicode_find_locale(char const* name)
     return rin_unicode_find_locale_by_parts(parsed.language, parsed.script, parsed.region);
 }
 
+static RinUnicodeDigitSet rin_unicode_default_digit_set(
+    RinUnicodeLocale const* selected)
+{
+    if (!selected) return RIN_UNICODE_DIGITS_LATIN;
+    if (rin_unicode_ascii_ieq(selected->language, "ar"))
+        return RIN_UNICODE_DIGITS_ARABIC_INDIC;
+    if (rin_unicode_ascii_ieq(selected->language, "fa"))
+        return RIN_UNICODE_DIGITS_EXTENDED_ARABIC_INDIC;
+    if (rin_unicode_ascii_ieq(selected->language, "hi"))
+        return RIN_UNICODE_DIGITS_DEVANAGARI;
+    if (rin_unicode_ascii_ieq(selected->language, "th"))
+        return RIN_UNICODE_DIGITS_THAI;
+    return RIN_UNICODE_DIGITS_LATIN;
+}
+
+static int rin_unicode_find_locale_selection(char const* name,
+                                             RinUnicodeLocale const** selected,
+                                             RinUnicodeDigitSet* digit_set)
+{
+    int has_override;
+    if (!selected || !digit_set ||
+        !rin_unicode_parse_numbering_system(name, digit_set, &has_override))
+        return 0;
+    *selected = rin_unicode_find_locale_base(name);
+    if (!*selected) return 0;
+    if (!has_override) *digit_set = rin_unicode_default_digit_set(*selected);
+    return 1;
+}
+
+static RinUnicodeLocale const* rin_unicode_find_locale(char const* name)
+{
+    RinUnicodeLocale const* selected;
+    RinUnicodeDigitSet ignored_digit_set;
+    if (!rin_unicode_find_locale_selection(name, &selected, &ignored_digit_set))
+        return (RinUnicodeLocale const*)0;
+    return selected;
+}
+
 static char const* rin_unicode_locale_environment_name(int category)
 {
     switch (category) {
@@ -261,24 +431,36 @@ static char const* rin_unicode_locale_environment_name(int category)
     }
 }
 
-static RinUnicodeLocale const* rin_unicode_locale_from_environment(int category)
+static RinUnicodeLocale const* rin_unicode_locale_from_environment(
+    int category, RinUnicodeDigitSet* digit_set_out)
 {
     char const* name = getenv("LC_ALL");
     char const* category_name;
     RinUnicodeLocale const* selected;
-    if (name && name[0] != '\0') return rin_unicode_find_locale(name);
+    if (name && name[0] != '\0') {
+        if (rin_unicode_find_locale_selection(name, &selected, digit_set_out))
+            return selected;
+        if (digit_set_out) *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
+        return g_locale_root;
+    }
     category_name = rin_unicode_locale_environment_name(category);
     name = category_name ? getenv(category_name) : (char const*)0;
     if (!name || name[0] == '\0') name = getenv("LANG");
-    if (!name || name[0] == '\0') return g_locale_root;
-    selected = rin_unicode_find_locale(name);
-    return selected ? selected : g_locale_root;
+    if (!name || name[0] == '\0') {
+        if (digit_set_out) *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
+        return g_locale_root;
+    }
+    if (rin_unicode_find_locale_selection(name, &selected, digit_set_out))
+        return selected;
+    if (digit_set_out) *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
+    return g_locale_root;
 }
 
 char* rin_unicode_setlocale(int category, char const* locale)
 {
     int i;
     RinUnicodeLocale const* selected;
+    RinUnicodeDigitSet digit_set;
     if (category < 0 || category >= LC_MAX) return (char*)0;
     rin_unicode_locale_lock();
     if (!locale) {
@@ -289,26 +471,32 @@ char* rin_unicode_setlocale(int category, char const* locale)
     if (locale[0] == '\0') {
         if (category == LC_ALL) {
             for (i = 0; i < LC_ALL; ++i)
-                g_current_locale[i] = rin_unicode_locale_from_environment(i);
+                g_current_locale[i] = rin_unicode_locale_from_environment(
+                    i, &g_current_digit_set[i]);
             g_current_locale[LC_ALL] = g_current_locale[LC_MESSAGES];
+            g_current_digit_set[LC_ALL] = g_current_digit_set[LC_MESSAGES];
             selected = g_current_locale[LC_MESSAGES];
             rin_unicode_locale_unlock();
             return (char*)selected->name;
         }
-        selected = rin_unicode_locale_from_environment(category);
+        selected = rin_unicode_locale_from_environment(category, &digit_set);
         g_current_locale[category] = selected;
+        g_current_digit_set[category] = digit_set;
         rin_unicode_locale_unlock();
         return (char*)selected->name;
     }
-    selected = rin_unicode_find_locale(locale);
-    if (!selected) {
+    if (!rin_unicode_find_locale_selection(locale, &selected, &digit_set)) {
         rin_unicode_locale_unlock();
         return (char*)0;
     }
     if (category == LC_ALL) {
-        for (i = 0; i < LC_MAX; ++i) g_current_locale[i] = selected;
+        for (i = 0; i < LC_MAX; ++i) {
+            g_current_locale[i] = selected;
+            g_current_digit_set[i] = digit_set;
+        }
     } else {
         g_current_locale[category] = selected;
+        g_current_digit_set[category] = digit_set;
     }
     rin_unicode_locale_unlock();
     return (char*)selected->name;
@@ -325,7 +513,7 @@ rin_unicode_lconv_t* rin_unicode_localeconv(void)
 
 static int rin_unicode_locale_append_digit(
     char* output, size_t capacity, size_t* written, char digit,
-    RinUnicodeLocale const* selected)
+    RinUnicodeDigitSet digit_set)
 {
     static const char latin[10][2] = {
         "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
@@ -351,18 +539,26 @@ static int rin_unicode_locale_append_digit(
     const char* text;
     size_t length = 0u;
     size_t index;
-    if (!output || !written || !selected || digit < '0' || digit > '9')
+    if (!output || !written || digit < '0' || digit > '9')
         return 0;
-    if (rin_unicode_ascii_ieq(selected->language, "ar"))
+    switch (digit_set) {
+    case RIN_UNICODE_DIGITS_ARABIC_INDIC:
         text = arabic_indic[(unsigned)(digit - '0')];
-    else if (rin_unicode_ascii_ieq(selected->language, "fa"))
+        break;
+    case RIN_UNICODE_DIGITS_EXTENDED_ARABIC_INDIC:
         text = extended_arabic_indic[(unsigned)(digit - '0')];
-    else if (rin_unicode_ascii_ieq(selected->language, "hi"))
+        break;
+    case RIN_UNICODE_DIGITS_DEVANAGARI:
         text = devanagari[(unsigned)(digit - '0')];
-    else if (rin_unicode_ascii_ieq(selected->language, "th"))
+        break;
+    case RIN_UNICODE_DIGITS_THAI:
         text = thai[(unsigned)(digit - '0')];
-    else
+        break;
+    case RIN_UNICODE_DIGITS_LATIN:
+    default:
         text = latin[(unsigned)(digit - '0')];
+        break;
+    }
     while (text[length] != '\0') ++length;
     if (*written >= capacity || length > capacity - *written - 1u)
         return 0;
@@ -375,6 +571,7 @@ size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
                                          int64_t value, char const* locale)
 {
     RinUnicodeLocale const* selected;
+    RinUnicodeDigitSet digit_set;
     char digits[32];
     unsigned char break_before[32] = {0};
     uint64_t magnitude;
@@ -390,11 +587,12 @@ size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
     if (output && output_capacity != 0u) output[0] = '\0';
     if (!output || output_capacity == 0u) return 0u;
     if (locale) {
-        selected = rin_unicode_find_locale(locale);
-        if (!selected) goto failure;
+        if (!rin_unicode_find_locale_selection(locale, &selected, &digit_set))
+            goto failure;
     } else {
         rin_unicode_locale_lock();
         selected = g_current_locale[LC_NUMERIC];
+        digit_set = g_current_digit_set[LC_NUMERIC];
         rin_unicode_locale_unlock();
     }
     if (!selected || !selected->lconv.thousands_sep ||
@@ -440,7 +638,7 @@ size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
         }
         if (!rin_unicode_locale_append_digit(
                 output, output_capacity, &written,
-                digits[digit_count - index - 1u], selected))
+                digits[digit_count - index - 1u], digit_set))
             goto failure;
     }
     output[written] = '\0';
@@ -486,6 +684,7 @@ size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
                                          char const* locale)
 {
     RinUnicodeLocale const* selected;
+    RinUnicodeDigitSet digit_set;
     char integer_digits[RIN_UNICODE_MAX_DECIMAL_BYTES];
     char fraction_digits[RIN_UNICODE_MAX_DECIMAL_BYTES];
     unsigned char break_before[RIN_UNICODE_MAX_DECIMAL_BYTES] = {0};
@@ -532,11 +731,12 @@ size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
     for (index = 0u; index < fraction_length; ++index)
         fraction_digits[index] = number[dot + 1u + index];
     if (locale) {
-        selected = rin_unicode_find_locale(locale);
-        if (!selected) goto failure;
+        if (!rin_unicode_find_locale_selection(locale, &selected, &digit_set))
+            goto failure;
     } else {
         rin_unicode_locale_lock();
         selected = g_current_locale[LC_NUMERIC];
+        digit_set = g_current_digit_set[LC_NUMERIC];
         rin_unicode_locale_unlock();
     }
     if (!selected || !selected->lconv.decimal_point ||
@@ -566,7 +766,7 @@ size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
             goto failure;
         if (!rin_unicode_locale_append_digit(
                 output, output_capacity, &written, integer_digits[index],
-                selected))
+                digit_set))
             goto failure;
     }
     if (fraction_length != 0u &&
@@ -577,7 +777,7 @@ size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
     for (index = 0u; index < fraction_length; ++index)
         if (!rin_unicode_locale_append_digit(
                 output, output_capacity, &written, fraction_digits[index],
-                selected))
+                digit_set))
             goto failure;
     output[written] = '\0';
     return written;
@@ -600,6 +800,7 @@ size_t rin_unicode_locale_format_currency(char* output, size_t output_capacity,
                                           char const* locale)
 {
     RinUnicodeLocale const* selected;
+    RinUnicodeDigitSet digit_set;
     char integer_digits[RIN_UNICODE_MAX_DECIMAL_BYTES];
     char fraction_digits[RIN_UNICODE_MAX_DECIMAL_BYTES];
     char amount[RIN_UNICODE_MAX_CURRENCY_BYTES];
@@ -663,11 +864,12 @@ size_t rin_unicode_locale_format_currency(char* output, size_t output_capacity,
         fraction_digits[index] = number[dot + 1u + index];
 
     if (locale) {
-        selected = rin_unicode_find_locale(locale);
-        if (!selected) goto failure;
+        if (!rin_unicode_find_locale_selection(locale, &selected, &digit_set))
+            goto failure;
     } else {
         rin_unicode_locale_lock();
         selected = g_current_locale[LC_MONETARY];
+        digit_set = g_current_digit_set[LC_MONETARY];
         rin_unicode_locale_unlock();
     }
     if (!selected || !selected->lconv.mon_decimal_point ||
@@ -719,7 +921,7 @@ size_t rin_unicode_locale_format_currency(char* output, size_t output_capacity,
             goto failure;
         if (!rin_unicode_locale_append_digit(
                 amount, sizeof(amount), &amount_written, integer_digits[index],
-                selected))
+                digit_set))
             goto failure;
     }
     if (monetary_fraction_length != 0u &&
@@ -730,7 +932,7 @@ size_t rin_unicode_locale_format_currency(char* output, size_t output_capacity,
     for (index = 0u; index < monetary_fraction_length; ++index)
         if (!rin_unicode_locale_append_digit(
                 amount, sizeof(amount), &amount_written, fraction_digits[index],
-                selected))
+                digit_set))
             goto failure;
     amount[amount_written] = '\0';
 
@@ -838,7 +1040,7 @@ char const* rin_unicode_locale_environment_value(int category)
     RinUnicodeLocale const* selected;
     if (category < 0 || category >= LC_ALL) return (char const*)0;
     rin_unicode_locale_lock();
-    selected = rin_unicode_locale_from_environment(category);
+    selected = rin_unicode_locale_from_environment(category, (RinUnicodeDigitSet*)0);
     rin_unicode_locale_unlock();
     return selected->name;
 }

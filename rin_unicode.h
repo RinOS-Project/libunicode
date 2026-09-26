@@ -164,31 +164,40 @@ uint32_t rin_unicode_towctrans(uint32_t cp, unsigned long desc);
 char* rin_unicode_setlocale(int category, const char* locale);
 rin_unicode_lconv_t* rin_unicode_localeconv(void);
 /* Format one signed integer with the selected catalog's grouping separator
- * and bounded product-locale default digits.  A NULL locale uses the current
- * LC_NUMERIC snapshot.  The output is failure-atomic and the return value
- * excludes the terminating NUL. */
+ * and digits.  A locale may carry the supported BCP-47 Unicode extension
+ * -u-nu-latn, -u-nu-arab, -u-nu-arabext, -u-nu-deva, or -u-nu-thai to
+ * override the catalog default; unsupported or malformed numbering-system
+ * extensions fail closed.  A NULL locale uses the current LC_NUMERIC
+ * snapshot.  The output is failure-atomic and the return value excludes the
+ * terminating NUL. */
 size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
                                          int64_t value, const char* locale);
 /* Format a bounded ASCII decimal literal with the selected catalog's
- * grouping, decimal separator, and bounded product-locale default digits.
- * The sign, integer digits, visible fraction digits, and trailing zeroes are
- * preserved; exponent notation, malformed input, and overlong input are
- * rejected.  A NULL locale uses the current LC_NUMERIC snapshot.  The output
- * is failure-atomic. */
+ * grouping, decimal separator, and digits.  The same supported BCP-47
+ * -u-nu-* override as the integer formatter is accepted.  The sign, integer
+ * digits, visible fraction digits, and trailing zeroes are preserved;
+ * exponent notation, malformed input, and overlong input are rejected.  A
+ * NULL locale uses the current LC_NUMERIC snapshot.  The output is
+ * failure-atomic. */
 size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
                                          const char* number,
                                          const char* locale);
 /* Format the same bounded ASCII decimal literal with the selected locale's
  * monetary grouping, decimal separator, currency symbol, fraction digits,
- * and POSIX sign placement.  Fractional input is never rounded: more visible
- * digits than the catalog's monetary precision are rejected.  The output is
- * failure-atomic and a NULL locale uses the current LC_MONETARY snapshot. */
+ * and POSIX sign placement.  The same supported BCP-47 -u-nu-* override is
+ * applied to the amount digits.  Fractional input is never rounded: more
+ * visible digits than the catalog's monetary precision are rejected.  The
+ * output is failure-atomic and a NULL locale uses the current LC_MONETARY
+ * snapshot. */
 size_t rin_unicode_locale_format_currency(char* output, size_t output_capacity,
                                           const char* number,
                                           const char* locale);
 const char* rin_unicode_locale_name(int category);
-/* Resolve a bounded POSIX/BCP-47 locale name to the immutable catalog's
- * canonical locale identifier.  The output is cleared on failure. */
+/* Resolve a bounded POSIX/BCP-47 locale name, including the supported
+ * -u-nu-* numbering-system subset, to the immutable catalog's canonical
+ * locale identifier.  The numbering-system extension is validated but is
+ * intentionally omitted from the product catalog ID.  The output is cleared
+ * on failure. */
 int rin_unicode_locale_canonicalize(const char* locale, char* output,
                                     size_t output_capacity);
 const char* rin_unicode_locale_environment_value(int category);
