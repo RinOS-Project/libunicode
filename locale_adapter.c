@@ -401,6 +401,137 @@ failure:
     return 0u;
 }
 
+static int rin_unicode_decimal_length(char const* text, size_t* length_out)
+{
+    size_t length;
+    if (!text || !length_out) return 0;
+    for (length = 0u; length < RIN_UNICODE_MAX_DECIMAL_BYTES; ++length) {
+        if (text[length] == '\0') {
+            *length_out = length;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int rin_unicode_append_decimal_text(char* output, size_t capacity,
+                                           size_t* written,
+                                           char const* text)
+{
+    size_t length = 0u;
+    size_t index;
+    if (!output || !written || !text || *written >= capacity) return 0;
+    while (length < RIN_UNICODE_MAX_DECIMAL_BYTES && text[length] != '\0')
+        ++length;
+    if (length == RIN_UNICODE_MAX_DECIMAL_BYTES ||
+        length > capacity - *written - 1u)
+        return 0;
+    for (index = 0u; index < length; ++index)
+        output[(*written)++] = text[index];
+    return 1;
+}
+
+size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
+                                         char const* number,
+                                         char const* locale)
+{
+    RinUnicodeLocale const* selected;
+    char integer_digits[RIN_UNICODE_MAX_DECIMAL_BYTES];
+    char fraction_digits[RIN_UNICODE_MAX_DECIMAL_BYTES];
+    unsigned char break_before[RIN_UNICODE_MAX_DECIMAL_BYTES] = {0};
+    size_t length = 0u;
+    size_t integer_length = 0u;
+    size_t fraction_length = 0u;
+    size_t dot = (size_t)-1;
+    size_t start = 0u;
+    size_t index;
+    size_t written = 0u;
+    size_t grouping_index = 0u;
+    size_t remaining;
+    unsigned int group;
+    char const* separator;
+    char const* decimal_point;
+    if (output && output_capacity != 0u) output[0] = '\0';
+    if (!output || output_capacity == 0u ||
+        !rin_unicode_decimal_length(number, &length) || length == 0u)
+        return 0u;
+    if (number[0] == '-') {
+        start = 1u;
+        if (start == length) goto failure;
+    } else if (number[0] == '+') {
+        goto failure;
+    }
+    for (index = start; index < length; ++index) {
+        if (number[index] == '.') {
+            if (dot != (size_t)-1 || index == start ||
+                index + 1u >= length)
+                goto failure;
+            dot = index;
+        } else if (number[index] < '0' || number[index] > '9') {
+            goto failure;
+        }
+    }
+    if (dot == (size_t)-1) dot = length;
+    integer_length = dot - start;
+    fraction_length = dot == length ? 0u : length - dot - 1u;
+    if (integer_length == 0u || integer_length >= sizeof(integer_digits) ||
+        fraction_length >= sizeof(fraction_digits))
+        goto failure;
+    for (index = 0u; index < integer_length; ++index)
+        integer_digits[index] = number[start + index];
+    for (index = 0u; index < fraction_length; ++index)
+        fraction_digits[index] = number[dot + 1u + index];
+    if (locale) {
+        selected = rin_unicode_find_locale(locale);
+        if (!selected) goto failure;
+    } else {
+        rin_unicode_locale_lock();
+        selected = g_current_locale[LC_NUMERIC];
+        rin_unicode_locale_unlock();
+    }
+    if (!selected || !selected->lconv.decimal_point ||
+        !selected->lconv.thousands_sep || !selected->lconv.grouping)
+        goto failure;
+
+    remaining = integer_length;
+    group = (unsigned char)selected->lconv.grouping[grouping_index];
+    while (group != 0u && group != (unsigned char)127 && remaining > group) {
+        remaining -= group;
+        break_before[remaining] = 1u;
+        if (selected->lconv.grouping[grouping_index + 1u] != '\0')
+            ++grouping_index;
+        group = (unsigned char)selected->lconv.grouping[grouping_index];
+        if (group == 0u) group = (unsigned char)127;
+    }
+    separator = selected->lconv.thousands_sep;
+    decimal_point = selected->lconv.decimal_point;
+    if (number[0] == '-' &&
+        !rin_unicode_append_decimal_text(output, output_capacity, &written,
+                                         "-"))
+        goto failure;
+    for (index = 0u; index < integer_length; ++index) {
+        if (break_before[index] &&
+            !rin_unicode_append_decimal_text(output, output_capacity, &written,
+                                             separator))
+            goto failure;
+        if (written + 1u >= output_capacity) goto failure;
+        output[written++] = integer_digits[index];
+    }
+    if (fraction_length != 0u &&
+        (!rin_unicode_append_decimal_text(output, output_capacity, &written,
+                                          decimal_point) ||
+         fraction_length > output_capacity - written - 1u))
+        goto failure;
+    for (index = 0u; index < fraction_length; ++index)
+        output[written++] = fraction_digits[index];
+    output[written] = '\0';
+    return written;
+
+failure:
+    if (output && output_capacity != 0u) output[0] = '\0';
+    return 0u;
+}
+
 char const* rin_unicode_locale_name(int category)
 {
     RinUnicodeLocale const* selected;

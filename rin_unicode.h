@@ -11,6 +11,8 @@
 #include <stdint.h>
 #endif
 
+#define RIN_UNICODE_MAX_DECIMAL_BYTES 128u
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -165,6 +167,14 @@ rin_unicode_lconv_t* rin_unicode_localeconv(void);
  * failure-atomic and the return value excludes the terminating NUL. */
 size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
                                          int64_t value, const char* locale);
+/* Format a bounded ASCII decimal literal with the selected catalog's
+ * grouping and decimal separator.  The sign, integer digits, visible
+ * fraction digits, and trailing zeroes are preserved; exponent notation,
+ * malformed input, and overlong input are rejected.  A NULL locale uses the
+ * current LC_NUMERIC snapshot.  The output is failure-atomic. */
+size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
+                                         const char* number,
+                                         const char* locale);
 const char* rin_unicode_locale_name(int category);
 /* Resolve a bounded POSIX/BCP-47 locale name to the immutable catalog's
  * canonical locale identifier.  The output is cleared on failure. */
