@@ -3,6 +3,8 @@
 #ifndef RIN_UNICODE_GENERATED_LOCALE_CATALOG_H
 #define RIN_UNICODE_GENERATED_LOCALE_CATALOG_H
 
+#define RIN_UNICODE_GENERATED_LOCALE_COUNT 57u
+
 typedef struct RinUnicodeGeneratedLocale {
     const char* name;
     const char* locale_id;

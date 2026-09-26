@@ -15,8 +15,9 @@
 typedef RinUnicodeGeneratedLocale RinUnicodeLocale;
 
 _Static_assert(sizeof(g_rin_unicode_generated_locales) /
-                   sizeof(g_rin_unicode_generated_locales[0]) == 57u,
-               "RinOS product locale snapshot must contain 57 records");
+                   sizeof(g_rin_unicode_generated_locales[0]) ==
+                       RIN_UNICODE_GENERATED_LOCALE_COUNT,
+               "RinOS product locale snapshot count disagrees with generated metadata");
 
 typedef struct RinUnicodeParsedLocale {
     char language[16];
