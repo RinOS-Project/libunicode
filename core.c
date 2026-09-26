@@ -789,6 +789,12 @@ uint32_t rin_unicode_toupper(uint32_t cp) {
 size_t rin_unicode_casefold_full(uint32_t cp, uint32_t out[3]) {
     const RinUnicodeCaseFoldEntry* entry;
     if (!out) return 0u;
+    if (!rin_unicode_is_valid_scalar(cp)) {
+        out[0] = 0u;
+        out[1] = 0u;
+        out[2] = 0u;
+        return 0u;
+    }
     entry = rin_unicode_find_casefold(cp);
     if (entry) {
         size_t i;
