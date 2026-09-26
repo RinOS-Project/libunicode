@@ -165,10 +165,12 @@ char* rin_unicode_setlocale(int category, const char* locale);
 rin_unicode_lconv_t* rin_unicode_localeconv(void);
 /* Format one signed integer with the selected catalog's grouping separator
  * and digits.  A locale may carry the supported BCP-47 Unicode extension
- * -u-nu-latn, -u-nu-arab, -u-nu-arabext, -u-nu-deva, or -u-nu-thai to
- * override the catalog default; unsupported or malformed numbering-system
- * extensions fail closed.  A NULL locale uses the current LC_NUMERIC
- * snapshot.  The output is failure-atomic and the return value excludes the
+ * -u-nu-latn, -u-nu-arab, -u-nu-arabext, -u-nu-deva, -u-nu-thai, the
+ * common Unicode decimal systems (beng／gujr／guru／knda／khmr／laoo／mlym／
+ * mymr／orya／telu／tamldec／tibt), or fullwide／hanidec to override the
+ * catalog default; unsupported or malformed numbering-system extensions fail
+ * closed.  A NULL locale uses the current LC_NUMERIC snapshot.  The output
+ * is failure-atomic and the return value excludes the
  * terminating NUL. */
 size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
                                          int64_t value, const char* locale);

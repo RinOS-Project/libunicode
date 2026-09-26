@@ -30,7 +30,21 @@ typedef enum RinUnicodeDigitSet {
     RIN_UNICODE_DIGITS_ARABIC_INDIC,
     RIN_UNICODE_DIGITS_EXTENDED_ARABIC_INDIC,
     RIN_UNICODE_DIGITS_DEVANAGARI,
-    RIN_UNICODE_DIGITS_THAI
+    RIN_UNICODE_DIGITS_THAI,
+    RIN_UNICODE_DIGITS_BENGALI,
+    RIN_UNICODE_DIGITS_GUJARATI,
+    RIN_UNICODE_DIGITS_GURMUKHI,
+    RIN_UNICODE_DIGITS_KANNADA,
+    RIN_UNICODE_DIGITS_KHMER,
+    RIN_UNICODE_DIGITS_LAO,
+    RIN_UNICODE_DIGITS_MALAYALAM,
+    RIN_UNICODE_DIGITS_MYANMAR,
+    RIN_UNICODE_DIGITS_ORIYA,
+    RIN_UNICODE_DIGITS_TELUGU,
+    RIN_UNICODE_DIGITS_TAMIL,
+    RIN_UNICODE_DIGITS_TIBETAN,
+    RIN_UNICODE_DIGITS_FULLWIDTH,
+    RIN_UNICODE_DIGITS_HANIDEC
 } RinUnicodeDigitSet;
 
 static RinUnicodeLocale const* g_locale_root = &g_rin_unicode_generated_locales[0];
@@ -219,6 +233,34 @@ static int rin_unicode_digit_set_from_token(char const* token, size_t length,
         *digit_set = RIN_UNICODE_DIGITS_DEVANAGARI;
     else if (rin_unicode_ascii_token_ieq(token, length, "thai"))
         *digit_set = RIN_UNICODE_DIGITS_THAI;
+    else if (rin_unicode_ascii_token_ieq(token, length, "beng"))
+        *digit_set = RIN_UNICODE_DIGITS_BENGALI;
+    else if (rin_unicode_ascii_token_ieq(token, length, "gujr"))
+        *digit_set = RIN_UNICODE_DIGITS_GUJARATI;
+    else if (rin_unicode_ascii_token_ieq(token, length, "guru"))
+        *digit_set = RIN_UNICODE_DIGITS_GURMUKHI;
+    else if (rin_unicode_ascii_token_ieq(token, length, "knda"))
+        *digit_set = RIN_UNICODE_DIGITS_KANNADA;
+    else if (rin_unicode_ascii_token_ieq(token, length, "khmr"))
+        *digit_set = RIN_UNICODE_DIGITS_KHMER;
+    else if (rin_unicode_ascii_token_ieq(token, length, "laoo"))
+        *digit_set = RIN_UNICODE_DIGITS_LAO;
+    else if (rin_unicode_ascii_token_ieq(token, length, "mlym"))
+        *digit_set = RIN_UNICODE_DIGITS_MALAYALAM;
+    else if (rin_unicode_ascii_token_ieq(token, length, "mymr"))
+        *digit_set = RIN_UNICODE_DIGITS_MYANMAR;
+    else if (rin_unicode_ascii_token_ieq(token, length, "orya"))
+        *digit_set = RIN_UNICODE_DIGITS_ORIYA;
+    else if (rin_unicode_ascii_token_ieq(token, length, "telu"))
+        *digit_set = RIN_UNICODE_DIGITS_TELUGU;
+    else if (rin_unicode_ascii_token_ieq(token, length, "tamldec"))
+        *digit_set = RIN_UNICODE_DIGITS_TAMIL;
+    else if (rin_unicode_ascii_token_ieq(token, length, "tibt"))
+        *digit_set = RIN_UNICODE_DIGITS_TIBETAN;
+    else if (rin_unicode_ascii_token_ieq(token, length, "fullwide"))
+        *digit_set = RIN_UNICODE_DIGITS_FULLWIDTH;
+    else if (rin_unicode_ascii_token_ieq(token, length, "hanidec"))
+        *digit_set = RIN_UNICODE_DIGITS_HANIDEC;
     else
         return 0;
     return 1;
@@ -515,55 +557,83 @@ static int rin_unicode_locale_append_digit(
     char* output, size_t capacity, size_t* written, char digit,
     RinUnicodeDigitSet digit_set)
 {
-    static const char latin[10][2] = {
-        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
+    static const char hanidec[10][4] = {
+        "\xE3\x80\x87", "\xE4\xB8\x80", "\xE4\xBA\x8C", "\xE4\xB8\x89",
+        "\xE5\x9B\x9B", "\xE4\xBA\x94", "\xE5\x85\xAD", "\xE4\xB8\x83",
+        "\xE5\x85\xab", "\xE4\xB9\x9D"
     };
-    static const char arabic_indic[10][3] = {
-        "\xD9\xA0", "\xD9\xA1", "\xD9\xA2", "\xD9\xA3", "\xD9\xA4",
-        "\xD9\xA5", "\xD9\xA6", "\xD9\xA7", "\xD9\xA8", "\xD9\xA9"
-    };
-    static const char extended_arabic_indic[10][3] = {
-        "\xDB\xB0", "\xDB\xB1", "\xDB\xB2", "\xDB\xB3", "\xDB\xB4",
-        "\xDB\xB5", "\xDB\xB6", "\xDB\xB7", "\xDB\xB8", "\xDB\xB9"
-    };
-    static const char devanagari[10][4] = {
-        "\xE0\xA5\xA6", "\xE0\xA5\xA7", "\xE0\xA5\xA8", "\xE0\xA5\xA9",
-        "\xE0\xA5\xAA", "\xE0\xA5\xAB", "\xE0\xA5\xAC", "\xE0\xA5\xAD",
-        "\xE0\xA5\xAE", "\xE0\xA5\xAF"
-    };
-    static const char thai[10][4] = {
-        "\xE0\xB9\x90", "\xE0\xB9\x91", "\xE0\xB9\x92", "\xE0\xB9\x93",
-        "\xE0\xB9\x94", "\xE0\xB9\x95", "\xE0\xB9\x96", "\xE0\xB9\x97",
-        "\xE0\xB9\x98", "\xE0\xB9\x99"
-    };
-    const char* text;
+    const char* text = NULL;
+    uint32_t codepoint = 0u;
     size_t length = 0u;
     size_t index;
     if (!output || !written || digit < '0' || digit > '9')
         return 0;
     switch (digit_set) {
-    case RIN_UNICODE_DIGITS_ARABIC_INDIC:
-        text = arabic_indic[(unsigned)(digit - '0')];
-        break;
-    case RIN_UNICODE_DIGITS_EXTENDED_ARABIC_INDIC:
-        text = extended_arabic_indic[(unsigned)(digit - '0')];
-        break;
-    case RIN_UNICODE_DIGITS_DEVANAGARI:
-        text = devanagari[(unsigned)(digit - '0')];
-        break;
-    case RIN_UNICODE_DIGITS_THAI:
-        text = thai[(unsigned)(digit - '0')];
+    case RIN_UNICODE_DIGITS_HANIDEC:
+        text = hanidec[(unsigned)(digit - '0')];
         break;
     case RIN_UNICODE_DIGITS_LATIN:
-    default:
-        text = latin[(unsigned)(digit - '0')];
+        codepoint = (uint32_t)'0';
         break;
-    }
-    while (text[length] != '\0') ++length;
-    if (*written >= capacity || length > capacity - *written - 1u)
+    case RIN_UNICODE_DIGITS_ARABIC_INDIC: codepoint = 0x0660u; break;
+    case RIN_UNICODE_DIGITS_EXTENDED_ARABIC_INDIC: codepoint = 0x06f0u; break;
+    case RIN_UNICODE_DIGITS_DEVANAGARI: codepoint = 0x0966u; break;
+    case RIN_UNICODE_DIGITS_BENGALI: codepoint = 0x09e6u; break;
+    case RIN_UNICODE_DIGITS_GURMUKHI: codepoint = 0x0a66u; break;
+    case RIN_UNICODE_DIGITS_GUJARATI: codepoint = 0x0ae6u; break;
+    case RIN_UNICODE_DIGITS_ORIYA: codepoint = 0x0b66u; break;
+    case RIN_UNICODE_DIGITS_TAMIL: codepoint = 0x0be6u; break;
+    case RIN_UNICODE_DIGITS_TELUGU: codepoint = 0x0c66u; break;
+    case RIN_UNICODE_DIGITS_KANNADA: codepoint = 0x0ce6u; break;
+    case RIN_UNICODE_DIGITS_MALAYALAM: codepoint = 0x0d66u; break;
+    case RIN_UNICODE_DIGITS_THAI: codepoint = 0x0e50u; break;
+    case RIN_UNICODE_DIGITS_LAO: codepoint = 0x0ed0u; break;
+    case RIN_UNICODE_DIGITS_TIBETAN: codepoint = 0x0f20u; break;
+    case RIN_UNICODE_DIGITS_MYANMAR: codepoint = 0x1040u; break;
+    case RIN_UNICODE_DIGITS_KHMER: codepoint = 0x17e0u; break;
+    case RIN_UNICODE_DIGITS_FULLWIDTH: codepoint = 0xff10u; break;
+    default:
         return 0;
-    for (index = 0u; index < length; ++index)
-        output[(*written)++] = text[index];
+    }
+
+    if (text != NULL) {
+        while (text[length] != '\0') ++length;
+        if (*written > capacity || length >= capacity - *written)
+            return 0;
+        for (index = 0u; index < length; ++index)
+            output[(*written)++] = text[index];
+        return 1;
+    }
+
+    codepoint += (uint32_t)(unsigned)(digit - '0');
+    if (codepoint <= 0x7fu) {
+        length = 1u;
+    } else if (codepoint <= 0x7ffu) {
+        length = 2u;
+    } else if (codepoint <= 0xffffu) {
+        length = 3u;
+    } else if (codepoint <= 0x10ffffu) {
+        length = 4u;
+    } else {
+        return 0;
+    }
+    if (*written > capacity || length >= capacity - *written)
+        return 0;
+    if (length == 1u) {
+        output[(*written)++] = (char)codepoint;
+    } else if (length == 2u) {
+        output[(*written)++] = (char)(0xc0u | (codepoint >> 6u));
+        output[(*written)++] = (char)(0x80u | (codepoint & 0x3fu));
+    } else if (length == 3u) {
+        output[(*written)++] = (char)(0xe0u | (codepoint >> 12u));
+        output[(*written)++] = (char)(0x80u | ((codepoint >> 6u) & 0x3fu));
+        output[(*written)++] = (char)(0x80u | (codepoint & 0x3fu));
+    } else {
+        output[(*written)++] = (char)(0xf0u | (codepoint >> 18u));
+        output[(*written)++] = (char)(0x80u | ((codepoint >> 12u) & 0x3fu));
+        output[(*written)++] = (char)(0x80u | ((codepoint >> 6u) & 0x3fu));
+        output[(*written)++] = (char)(0x80u | (codepoint & 0x3fu));
+    }
     return 1;
 }
 
