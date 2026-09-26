@@ -613,10 +613,14 @@ static RinUnicodeTimeNames const* rin_unicode_current_time_names_unlocked(void)
 char const* rin_unicode_locale_weekday(int weekday, int abbreviated)
 {
     RinUnicodeTimeNames const* names;
+    char const* result;
     rin_unicode_locale_lock();
     names = rin_unicode_current_time_names_unlocked();
-    if (weekday < 0 || weekday >= 7) weekday = 0;
-    char const* result = abbreviated ? names->weekdays_short[weekday] : names->weekdays_long[weekday];
+    if (weekday < 0 || weekday >= 7) {
+        rin_unicode_locale_unlock();
+        return NULL;
+    }
+    result = abbreviated ? names->weekdays_short[weekday] : names->weekdays_long[weekday];
     rin_unicode_locale_unlock();
     return result;
 }
@@ -624,10 +628,14 @@ char const* rin_unicode_locale_weekday(int weekday, int abbreviated)
 char const* rin_unicode_locale_month(int month, int abbreviated)
 {
     RinUnicodeTimeNames const* names;
+    char const* result;
     rin_unicode_locale_lock();
     names = rin_unicode_current_time_names_unlocked();
-    if (month < 0 || month >= 12) month = 0;
-    char const* result = abbreviated ? names->months_short[month] : names->months_long[month];
+    if (month < 0 || month >= 12) {
+        rin_unicode_locale_unlock();
+        return NULL;
+    }
+    result = abbreviated ? names->months_short[month] : names->months_long[month];
     rin_unicode_locale_unlock();
     return result;
 }
@@ -636,6 +644,7 @@ char const* rin_unicode_locale_am_pm(int hour)
 {
     RinUnicodeTimeNames const* names;
     char const* result;
+    if (hour < 0 || hour >= 24) return NULL;
     rin_unicode_locale_lock();
     names = rin_unicode_current_time_names_unlocked();
     result = names->am_pm[hour >= 12 ? 1 : 0];
@@ -647,6 +656,8 @@ char const* rin_unicode_locale_time_format(char conversion)
 {
     RinUnicodeTimeNames const* names;
     char const* result;
+    if (conversion != 'c' && conversion != 'x' && conversion != 'X')
+        return NULL;
     rin_unicode_locale_lock();
     names = rin_unicode_current_time_names_unlocked();
     if (conversion == 'c') result = names->date_time_format;
