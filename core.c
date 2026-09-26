@@ -1070,63 +1070,123 @@ size_t rin_unicode_normalize_utf8(char* dest, size_t dest_cap,
     return state.out_len;
 }
 
+#define RIN_UNICODE_TRANSFORM_SEGMENT 192u
+
 typedef struct RinUnicodeTransformIterator {
     const char* utf8;
     const uint32_t* utf32;
-    uint32_t queue[16];
+    uint32_t queue[RIN_UNICODE_TRANSFORM_SEGMENT];
+    uint32_t segment[RIN_UNICODE_TRANSFORM_SEGMENT];
+    uint8_t classes[RIN_UNICODE_TRANSFORM_SEGMENT];
     size_t queue_length;
     size_t queue_index;
+    size_t segment_length;
     int utf8_mode;
+    int failed;
 } RinUnicodeTransformIterator;
+
+static int rin_unicode_iterator_flush_segment(
+    RinUnicodeTransformIterator* it) {
+    size_t index;
+    if (!it) return 0;
+    for (index = 0u; index < it->segment_length; ++index)
+        it->queue[it->queue_length++] = it->segment[index];
+    it->segment_length = 0u;
+    return it->queue_length != 0u;
+}
+
+static int rin_unicode_iterator_feed_folded(
+    RinUnicodeTransformIterator* it, uint32_t cp) {
+    const uint8_t canonical_class = rin_unicode_combining_class(cp);
+    size_t position;
+    if (!it || it->failed || it->segment_length >= RIN_UNICODE_TRANSFORM_SEGMENT) {
+        if (it) it->failed = 1;
+        return 0;
+    }
+    if (canonical_class == 0u && it->segment_length != 0u) {
+        if (!rin_unicode_iterator_flush_segment(it)) return 0;
+    }
+    position = it->segment_length;
+    if (canonical_class != 0u) {
+        while (position > 0u &&
+               it->classes[position - 1u] > canonical_class) {
+            it->segment[position] = it->segment[position - 1u];
+            it->classes[position] = it->classes[position - 1u];
+            --position;
+        }
+    }
+    it->segment[position] = cp;
+    it->classes[position] = canonical_class;
+    ++it->segment_length;
+    return 1;
+}
+
+static int rin_unicode_iterator_feed_scalar(
+    RinUnicodeTransformIterator* it, uint32_t cp) {
+    uint32_t decomposed[RIN_UNICODE_DECOMP_SEGMENT];
+    size_t decomposed_length;
+    size_t index;
+    if (!it) return 0;
+    decomposed_length = rin_unicode_decompose_scalar(
+        cp, 1, decomposed, RIN_UNICODE_DECOMP_SEGMENT, 0u);
+    if (decomposed_length > RIN_UNICODE_DECOMP_SEGMENT) return 0;
+    for (index = 0u; index < decomposed_length; ++index) {
+        uint32_t folded[3];
+        size_t folded_length = rin_unicode_casefold_full(
+            decomposed[index], folded);
+        size_t folded_index;
+        for (folded_index = 0u; folded_index < folded_length;
+             ++folded_index) {
+            if (!rin_unicode_iterator_feed_folded(
+                    it, folded[folded_index]))
+                return 0;
+        }
+    }
+    return 1;
+}
 
 static int rin_unicode_iterator_fill_utf8(RinUnicodeTransformIterator* it) {
     uint32_t cp = 0u;
     size_t source_length;
     size_t consumed = 0u;
-    uint32_t segment[RIN_UNICODE_DECOMP_SEGMENT];
-    size_t seg_len = 0u;
-    size_t i;
-    if (!it || !it->utf8 || *it->utf8 == '\0') return 0;
-    if (!rin_unicode_cstring_length(it->utf8, &source_length) ||
-        rin_unicode_decode_utf8(it->utf8, source_length, &cp, &consumed) !=
-            RIN_UNICODE_OK) {
-        it->utf8++;
-        cp = 0xFFFDu;
-        consumed = 0u;
-    }
-    seg_len = rin_unicode_decompose_scalar(cp, 1, segment, RIN_UNICODE_DECOMP_SEGMENT, 0u);
+    if (!it || !it->utf8 || it->failed) return 0;
     it->queue_index = 0u;
     it->queue_length = 0u;
-    for (i = 0u; i < seg_len; ++i) {
-        uint32_t folded[3];
-        size_t folded_len = rin_unicode_casefold_full(segment[i], folded);
-        size_t j;
-        for (j = 0u; j < folded_len && it->queue_length < 16u; ++j) {
-            it->queue[it->queue_length++] = folded[j];
+    while (it->queue_length == 0u && *it->utf8 != '\0') {
+        if (!rin_unicode_cstring_length(it->utf8, &source_length) ||
+            rin_unicode_decode_utf8(it->utf8, source_length, &cp, &consumed) !=
+                RIN_UNICODE_OK) {
+            it->utf8++;
+            cp = 0xFFFDu;
+            consumed = 0u;
+        }
+        it->utf8 += consumed ? consumed : 1u;
+        if (!rin_unicode_iterator_feed_scalar(it, cp)) {
+            it->failed = 1;
+            return 0;
         }
     }
-    it->utf8 += consumed ? consumed : 1u;
+    if (*it->utf8 == '\0' && it->segment_length != 0u &&
+        it->queue_length == 0u &&
+        !rin_unicode_iterator_flush_segment(it))
+        return 0;
     return it->queue_length != 0u;
 }
 
 static int rin_unicode_iterator_fill_utf32(RinUnicodeTransformIterator* it) {
-    uint32_t cp;
-    uint32_t segment[RIN_UNICODE_DECOMP_SEGMENT];
-    size_t seg_len;
-    size_t i;
-    if (!it || !it->utf32 || *it->utf32 == 0u) return 0;
-    cp = *it->utf32++;
-    seg_len = rin_unicode_decompose_scalar(cp, 1, segment, RIN_UNICODE_DECOMP_SEGMENT, 0u);
+    if (!it || !it->utf32 || it->failed) return 0;
     it->queue_index = 0u;
     it->queue_length = 0u;
-    for (i = 0u; i < seg_len; ++i) {
-        uint32_t folded[3];
-        size_t folded_len = rin_unicode_casefold_full(segment[i], folded);
-        size_t j;
-        for (j = 0u; j < folded_len && it->queue_length < 16u; ++j) {
-            it->queue[it->queue_length++] = folded[j];
+    while (it->queue_length == 0u && *it->utf32 != 0u) {
+        if (!rin_unicode_iterator_feed_scalar(it, *it->utf32++)) {
+            it->failed = 1;
+            return 0;
         }
     }
+    if (*it->utf32 == 0u && it->segment_length != 0u &&
+        it->queue_length == 0u &&
+        !rin_unicode_iterator_flush_segment(it))
+        return 0;
     return it->queue_length != 0u;
 }
 
@@ -1152,7 +1212,9 @@ size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32
     it.utf8 = (const char*)0;
     it.utf32 = src;
     it.queue_length = it.queue_index = 0u;
+    it.segment_length = 0u;
     it.utf8_mode = 0;
+    it.failed = 0;
     if (src && !rin_unicode_wstring_length(src, &source_length)) {
         if (dest && dest_cap > 0u) dest[0] = 0u;
         return (size_t)-1;
@@ -1172,6 +1234,10 @@ size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32
         if (dest && out_len + 1u < dest_cap) dest[out_len] = cp;
         out_len++;
     }
+    if (it.failed) {
+        if (dest && dest_cap > 0u) dest[0] = 0u;
+        return (size_t)-1;
+    }
     if (dest && dest_cap > 0u) {
         size_t term = out_len < dest_cap ? out_len : dest_cap - 1u;
         dest[term] = 0u;
@@ -1187,7 +1253,9 @@ size_t rin_unicode_transform_utf8(char* dest, size_t dest_cap, const char* src) 
     it.utf8 = src;
     it.utf32 = (const uint32_t*)0;
     it.queue_length = it.queue_index = 0u;
+    it.segment_length = 0u;
     it.utf8_mode = 1;
+    it.failed = 0;
     if (src && !rin_unicode_cstring_length(src, &source_length)) {
         if (dest && dest_cap > 0u) dest[0] = '\0';
         return (size_t)-1;
@@ -1199,6 +1267,10 @@ size_t rin_unicode_transform_utf8(char* dest, size_t dest_cap, const char* src) 
             if (dest && dest_cap > 0u) dest[0] = '\0';
             return (size_t)-1;
         }
+    }
+    if (it.failed) {
+        if (dest && dest_cap > 0u) dest[0] = '\0';
+        return (size_t)-1;
     }
     if (dest && dest_cap > 0u) {
         size_t term = out_len < dest_cap ? out_len : dest_cap - 1u;
@@ -1223,11 +1295,15 @@ int rin_unicode_compare_utf32(const uint32_t* lhs, const uint32_t* rhs) {
     a.utf8 = (const char*)0;
     a.utf32 = lhs;
     a.queue_length = a.queue_index = 0u;
+    a.segment_length = 0u;
     a.utf8_mode = 0;
+    a.failed = 0;
     b.utf8 = (const char*)0;
     b.utf32 = rhs;
     b.queue_length = b.queue_index = 0u;
+    b.segment_length = 0u;
     b.utf8_mode = 0;
+    b.failed = 0;
     for (;;) {
         has_left = rin_unicode_iterator_next(&a, &left);
         has_right = rin_unicode_iterator_next(&b, &right);
