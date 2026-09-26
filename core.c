@@ -1156,11 +1156,10 @@ static int rin_unicode_iterator_fill_utf8(RinUnicodeTransformIterator* it) {
         if (!rin_unicode_cstring_length(it->utf8, &source_length) ||
             rin_unicode_decode_utf8(it->utf8, source_length, &cp, &consumed) !=
                 RIN_UNICODE_OK) {
-            it->utf8++;
             cp = 0xFFFDu;
-            consumed = 0u;
+            consumed = 1u;
         }
-        it->utf8 += consumed ? consumed : 1u;
+        it->utf8 += consumed;
         if (!rin_unicode_iterator_feed_scalar(it, cp)) {
             it->failed = 1;
             return 0;
@@ -1331,11 +1330,15 @@ int rin_unicode_compare_utf8(const char* lhs, const char* rhs) {
     a.utf8 = lhs ? lhs : "";
     a.utf32 = (const uint32_t*)0;
     a.queue_length = a.queue_index = 0u;
+    a.segment_length = 0u;
     a.utf8_mode = 1;
+    a.failed = 0;
     b.utf8 = rhs ? rhs : "";
     b.utf32 = (const uint32_t*)0;
     b.queue_length = b.queue_index = 0u;
+    b.segment_length = 0u;
     b.utf8_mode = 1;
+    b.failed = 0;
     for (;;) {
         has_left = rin_unicode_iterator_next(&a, &left);
         has_right = rin_unicode_iterator_next(&b, &right);
@@ -1344,6 +1347,7 @@ int rin_unicode_compare_utf8(const char* lhs, const char* rhs) {
     }
     if (has_left) return 1;
     if (has_right) return -1;
+    if (a.failed != b.failed) return a.failed ? 1 : -1;
     return 0;
 }
 

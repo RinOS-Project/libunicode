@@ -16,14 +16,16 @@ int main(void) {
 
     if (rin_unicode_compare_utf8("A", "a") != 0)
         return 1;
-    if (rin_unicode_compare_utf8(reordered_left, reordered_right) != 0)
+    if (rin_unicode_compare_utf8("\x80", "\xEF\xBF\xBD") != 0)
         return 2;
+    if (rin_unicode_compare_utf8(reordered_left, reordered_right) != 0)
+        return 3;
     transformed_size = rin_unicode_transform_utf8(
         transformed, sizeof(transformed), reordered_left);
     if (transformed_size != sizeof(expected) - 1u)
-        return 3;
+        return 4;
     for (size_t index = 0u; index < sizeof(expected); ++index)
         if (transformed[index] != expected[index])
-            return 4;
+            return 5;
     return 0;
 }
