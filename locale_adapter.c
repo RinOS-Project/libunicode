@@ -323,6 +323,40 @@ rin_unicode_lconv_t* rin_unicode_localeconv(void)
     return (rin_unicode_lconv_t*)&selected->lconv;
 }
 
+static int rin_unicode_locale_append_digit(
+    char* output, size_t capacity, size_t* written, char digit,
+    RinUnicodeLocale const* selected)
+{
+    static const char latin[10][2] = {
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
+    };
+    static const char arabic_indic[10][3] = {
+        "\xD9\xA0", "\xD9\xA1", "\xD9\xA2", "\xD9\xA3", "\xD9\xA4",
+        "\xD9\xA5", "\xD9\xA6", "\xD9\xA7", "\xD9\xA8", "\xD9\xA9"
+    };
+    static const char extended_arabic_indic[10][3] = {
+        "\xDB\xB0", "\xDB\xB1", "\xDB\xB2", "\xDB\xB3", "\xDB\xB4",
+        "\xDB\xB5", "\xDB\xB6", "\xDB\xB7", "\xDB\xB8", "\xDB\xB9"
+    };
+    const char* text;
+    size_t length = 0u;
+    size_t index;
+    if (!output || !written || !selected || digit < '0' || digit > '9')
+        return 0;
+    if (rin_unicode_ascii_ieq(selected->language, "ar"))
+        text = arabic_indic[(unsigned)(digit - '0')];
+    else if (rin_unicode_ascii_ieq(selected->language, "fa"))
+        text = extended_arabic_indic[(unsigned)(digit - '0')];
+    else
+        text = latin[(unsigned)(digit - '0')];
+    while (text[length] != '\0') ++length;
+    if (*written >= capacity || length > capacity - *written - 1u)
+        return 0;
+    for (index = 0u; index < length; ++index)
+        output[(*written)++] = text[index];
+    return 1;
+}
+
 size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
                                          int64_t value, char const* locale)
 {
@@ -390,8 +424,10 @@ size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
                  ++separator_end)
                 output[written++] = separator[separator_end];
         }
-        if (written + 1u >= output_capacity) goto failure;
-        output[written++] = digits[digit_count - index - 1u];
+        if (!rin_unicode_locale_append_digit(
+                output, output_capacity, &written,
+                digits[digit_count - index - 1u], selected))
+            goto failure;
     }
     output[written] = '\0';
     return written;
@@ -514,8 +550,10 @@ size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
             !rin_unicode_append_decimal_text(output, output_capacity, &written,
                                              separator))
             goto failure;
-        if (written + 1u >= output_capacity) goto failure;
-        output[written++] = integer_digits[index];
+        if (!rin_unicode_locale_append_digit(
+                output, output_capacity, &written, integer_digits[index],
+                selected))
+            goto failure;
     }
     if (fraction_length != 0u &&
         (!rin_unicode_append_decimal_text(output, output_capacity, &written,
@@ -523,7 +561,10 @@ size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
          fraction_length > output_capacity - written - 1u))
         goto failure;
     for (index = 0u; index < fraction_length; ++index)
-        output[written++] = fraction_digits[index];
+        if (!rin_unicode_locale_append_digit(
+                output, output_capacity, &written, fraction_digits[index],
+                selected))
+            goto failure;
     output[written] = '\0';
     return written;
 
@@ -662,8 +703,10 @@ size_t rin_unicode_locale_format_currency(char* output, size_t output_capacity,
             !rin_unicode_append_decimal_text(amount, sizeof(amount),
                                              &amount_written, separator))
             goto failure;
-        if (amount_written + 1u >= sizeof(amount)) goto failure;
-        amount[amount_written++] = integer_digits[index];
+        if (!rin_unicode_locale_append_digit(
+                amount, sizeof(amount), &amount_written, integer_digits[index],
+                selected))
+            goto failure;
     }
     if (monetary_fraction_length != 0u &&
         (!rin_unicode_append_decimal_text(amount, sizeof(amount),
@@ -671,7 +714,10 @@ size_t rin_unicode_locale_format_currency(char* output, size_t output_capacity,
          monetary_fraction_length > sizeof(amount) - amount_written - 1u))
         goto failure;
     for (index = 0u; index < monetary_fraction_length; ++index)
-        amount[amount_written++] = fraction_digits[index];
+        if (!rin_unicode_locale_append_digit(
+                amount, sizeof(amount), &amount_written, fraction_digits[index],
+                selected))
+            goto failure;
     amount[amount_written] = '\0';
 
     if (negative && sign_position == 0u &&

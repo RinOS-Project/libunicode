@@ -163,16 +163,18 @@ uint32_t rin_unicode_towctrans(uint32_t cp, unsigned long desc);
 
 char* rin_unicode_setlocale(int category, const char* locale);
 rin_unicode_lconv_t* rin_unicode_localeconv(void);
-/* Format one signed integer with the selected catalog's grouping separator.
- * A NULL locale uses the current LC_NUMERIC snapshot.  The output is
- * failure-atomic and the return value excludes the terminating NUL. */
+/* Format one signed integer with the selected catalog's grouping separator
+ * and bounded product-locale default digits.  A NULL locale uses the current
+ * LC_NUMERIC snapshot.  The output is failure-atomic and the return value
+ * excludes the terminating NUL. */
 size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
                                          int64_t value, const char* locale);
 /* Format a bounded ASCII decimal literal with the selected catalog's
- * grouping and decimal separator.  The sign, integer digits, visible
- * fraction digits, and trailing zeroes are preserved; exponent notation,
- * malformed input, and overlong input are rejected.  A NULL locale uses the
- * current LC_NUMERIC snapshot.  The output is failure-atomic. */
+ * grouping, decimal separator, and bounded product-locale default digits.
+ * The sign, integer digits, visible fraction digits, and trailing zeroes are
+ * preserved; exponent notation, malformed input, and overlong input are
+ * rejected.  A NULL locale uses the current LC_NUMERIC snapshot.  The output
+ * is failure-atomic. */
 size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
                                          const char* number,
                                          const char* locale);
