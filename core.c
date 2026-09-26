@@ -49,6 +49,10 @@ enum {
     RIN_UNICODE_WCTYPE_XDIGIT = 12
 };
 
+const char* rin_unicode_database_version(void) {
+    return RIN_UNICODE_GENERATED_DATABASE_VERSION;
+}
+
 enum {
     RIN_UNICODE_WCTRANS_TOLOWER = 1,
     RIN_UNICODE_WCTRANS_TOUPPER = 2
