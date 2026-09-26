@@ -532,6 +532,220 @@ failure:
     return 0u;
 }
 
+static int rin_unicode_currency_add_part(const char** parts, size_t capacity,
+                                          size_t* count, const char* part)
+{
+    if (!parts || !count || !part || *count >= capacity) return 0;
+    parts[(*count)++] = part;
+    return 1;
+}
+
+size_t rin_unicode_locale_format_currency(char* output, size_t output_capacity,
+                                          char const* number,
+                                          char const* locale)
+{
+    RinUnicodeLocale const* selected;
+    char integer_digits[RIN_UNICODE_MAX_DECIMAL_BYTES];
+    char fraction_digits[RIN_UNICODE_MAX_DECIMAL_BYTES];
+    char amount[RIN_UNICODE_MAX_CURRENCY_BYTES];
+    unsigned char break_before[RIN_UNICODE_MAX_DECIMAL_BYTES] = {0};
+    const char* parts[12];
+    const char* separator;
+    const char* decimal_point;
+    const char* symbol;
+    const char* sign;
+    size_t length = 0u;
+    size_t integer_length = 0u;
+    size_t fraction_length = 0u;
+    size_t monetary_fraction_length;
+    size_t dot = (size_t)-1;
+    size_t start = 0u;
+    size_t index;
+    size_t amount_written = 0u;
+    size_t written = 0u;
+    size_t part_count = 0u;
+    size_t grouping_index = 0u;
+    unsigned int group;
+    unsigned int symbol_precedes;
+    unsigned int separator_by_space;
+    unsigned int sign_position;
+    int negative;
+    static const char space[] = " ";
+    static const char open[] = "(";
+    static const char close[] = ")";
+
+    if (output && output_capacity != 0u) output[0] = '\0';
+    if (!output || output_capacity == 0u ||
+        !rin_unicode_decimal_length(number, &length) || length == 0u)
+        return 0u;
+
+    negative = number[0] == '-';
+    if (negative) {
+        start = 1u;
+        if (start == length) goto failure;
+    } else if (number[0] == '+') {
+        goto failure;
+    }
+    for (index = start; index < length; ++index) {
+        if (number[index] == '.') {
+            if (dot != (size_t)-1 || index == start ||
+                index + 1u >= length)
+                goto failure;
+            dot = index;
+        } else if (number[index] < '0' || number[index] > '9') {
+            goto failure;
+        }
+    }
+    if (dot == (size_t)-1) dot = length;
+    integer_length = dot - start;
+    fraction_length = dot == length ? 0u : length - dot - 1u;
+    if (integer_length == 0u || integer_length >= sizeof(integer_digits) ||
+        fraction_length >= sizeof(fraction_digits))
+        goto failure;
+    for (index = 0u; index < integer_length; ++index)
+        integer_digits[index] = number[start + index];
+    for (index = 0u; index < fraction_length; ++index)
+        fraction_digits[index] = number[dot + 1u + index];
+
+    if (locale) {
+        selected = rin_unicode_find_locale(locale);
+        if (!selected) goto failure;
+    } else {
+        rin_unicode_locale_lock();
+        selected = g_current_locale[LC_MONETARY];
+        rin_unicode_locale_unlock();
+    }
+    if (!selected || !selected->lconv.mon_decimal_point ||
+        !selected->lconv.mon_thousands_sep || !selected->lconv.mon_grouping ||
+        !selected->lconv.currency_symbol ||
+        !selected->lconv.positive_sign || !selected->lconv.negative_sign)
+        goto failure;
+    monetary_fraction_length =
+        (unsigned char)selected->lconv.frac_digits;
+    if (monetary_fraction_length == 127u ||
+        monetary_fraction_length >= sizeof(fraction_digits) ||
+        fraction_length > monetary_fraction_length)
+        goto failure;
+    for (index = fraction_length; index < monetary_fraction_length; ++index)
+        fraction_digits[index] = '0';
+
+    separator = selected->lconv.mon_thousands_sep;
+    decimal_point = selected->lconv.mon_decimal_point;
+    symbol = selected->lconv.currency_symbol;
+    sign = negative ? selected->lconv.negative_sign
+                    : selected->lconv.positive_sign;
+    symbol_precedes = (unsigned char)(negative
+                                          ? selected->lconv.n_cs_precedes
+                                          : selected->lconv.p_cs_precedes);
+    separator_by_space = (unsigned char)(negative
+                                             ? selected->lconv.n_sep_by_space
+                                             : selected->lconv.p_sep_by_space);
+    sign_position = (unsigned char)(negative
+                                        ? selected->lconv.n_sign_posn
+                                        : selected->lconv.p_sign_posn);
+    if (symbol[0] == '\0' || symbol_precedes > 1u ||
+        separator_by_space > 1u || sign_position > 4u)
+        goto failure;
+
+    group = (unsigned char)selected->lconv.mon_grouping[grouping_index];
+    size_t remaining = integer_length;
+    while (group != 0u && group != (unsigned char)127 && remaining > group) {
+        remaining -= group;
+        break_before[remaining] = 1u;
+        if (selected->lconv.mon_grouping[grouping_index + 1u] != '\0')
+            ++grouping_index;
+        group = (unsigned char)selected->lconv.mon_grouping[grouping_index];
+        if (group == 0u) group = (unsigned char)127;
+    }
+    for (index = 0u; index < integer_length; ++index) {
+        if (break_before[index] &&
+            !rin_unicode_append_decimal_text(amount, sizeof(amount),
+                                             &amount_written, separator))
+            goto failure;
+        if (amount_written + 1u >= sizeof(amount)) goto failure;
+        amount[amount_written++] = integer_digits[index];
+    }
+    if (monetary_fraction_length != 0u &&
+        (!rin_unicode_append_decimal_text(amount, sizeof(amount),
+                                          &amount_written, decimal_point) ||
+         monetary_fraction_length > sizeof(amount) - amount_written - 1u))
+        goto failure;
+    for (index = 0u; index < monetary_fraction_length; ++index)
+        amount[amount_written++] = fraction_digits[index];
+    amount[amount_written] = '\0';
+
+    if (negative && sign_position == 0u &&
+        !rin_unicode_currency_add_part(parts, sizeof(parts) / sizeof(parts[0]),
+                                       &part_count, open))
+        goto failure;
+    if (sign_position == 1u && sign[0] != '\0' &&
+        !rin_unicode_currency_add_part(parts, sizeof(parts) / sizeof(parts[0]),
+                                       &part_count, sign))
+        goto failure;
+    if (symbol_precedes != 0u) {
+        if (!rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, symbol))
+            goto failure;
+        if (sign_position == 2u && sign[0] != '\0' &&
+            !rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, sign))
+            goto failure;
+        if (separator_by_space != 0u &&
+            !rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, space))
+            goto failure;
+        if (sign_position == 3u && sign[0] != '\0' &&
+            !rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, sign))
+            goto failure;
+        if (!rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, amount))
+            goto failure;
+        if (sign_position == 4u && sign[0] != '\0' &&
+            !rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, sign))
+            goto failure;
+    } else {
+        if (sign_position == 3u && sign[0] != '\0' &&
+            !rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, sign))
+            goto failure;
+        if (!rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, amount))
+            goto failure;
+        if (sign_position == 4u && sign[0] != '\0' &&
+            !rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, sign))
+            goto failure;
+        if (separator_by_space != 0u &&
+            !rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, space))
+            goto failure;
+        if (!rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, symbol))
+            goto failure;
+        if (sign_position == 2u && sign[0] != '\0' &&
+            !rin_unicode_currency_add_part(
+                parts, sizeof(parts) / sizeof(parts[0]), &part_count, sign))
+            goto failure;
+    }
+    if (negative && sign_position == 0u &&
+        !rin_unicode_currency_add_part(parts, sizeof(parts) / sizeof(parts[0]),
+                                       &part_count, close))
+        goto failure;
+    for (index = 0u; index < part_count; ++index) {
+        if (!rin_unicode_append_decimal_text(output, output_capacity, &written,
+                                             parts[index]))
+            goto failure;
+    }
+    output[written] = '\0';
+    return written;
+
+failure:
+    if (output && output_capacity != 0u) output[0] = '\0';
+    return 0u;
+}
+
 char const* rin_unicode_locale_name(int category)
 {
     RinUnicodeLocale const* selected;

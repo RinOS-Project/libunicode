@@ -12,6 +12,7 @@
 #endif
 
 #define RIN_UNICODE_MAX_DECIMAL_BYTES 128u
+#define RIN_UNICODE_MAX_CURRENCY_BYTES 512u
 
 #ifdef __cplusplus
 extern "C" {
@@ -175,6 +176,14 @@ size_t rin_unicode_locale_format_integer(char* output, size_t output_capacity,
 size_t rin_unicode_locale_format_decimal(char* output, size_t output_capacity,
                                          const char* number,
                                          const char* locale);
+/* Format the same bounded ASCII decimal literal with the selected locale's
+ * monetary grouping, decimal separator, currency symbol, fraction digits,
+ * and POSIX sign placement.  Fractional input is never rounded: more visible
+ * digits than the catalog's monetary precision are rejected.  The output is
+ * failure-atomic and a NULL locale uses the current LC_MONETARY snapshot. */
+size_t rin_unicode_locale_format_currency(char* output, size_t output_capacity,
+                                          const char* number,
+                                          const char* locale);
 const char* rin_unicode_locale_name(int category);
 /* Resolve a bounded POSIX/BCP-47 locale name to the immutable catalog's
  * canonical locale identifier.  The output is cleared on failure. */
