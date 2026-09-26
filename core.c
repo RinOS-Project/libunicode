@@ -1126,6 +1126,7 @@ size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32
     RinUnicodeTransformIterator it;
     size_t out_len = 0u;
     size_t source_length;
+    size_t source_index;
     uint32_t cp = 0u;
     it.utf8 = (const char*)0;
     it.utf32 = src;
@@ -1134,6 +1135,16 @@ size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32
     if (src && !rin_unicode_wstring_length(src, &source_length)) {
         if (dest && dest_cap > 0u) dest[0] = 0u;
         return (size_t)-1;
+    }
+    /* Validate the complete caller-owned sequence before emitting anything.
+     * Otherwise an invalid scalar near the end could leave a partial
+     * casefold/decomposition in the destination while reporting failure. */
+    for (source_index = 0u; src && source_index < source_length;
+         ++source_index) {
+        if (!rin_unicode_is_valid_scalar(src[source_index])) {
+            if (dest && dest_cap > 0u) dest[0] = 0u;
+            return (size_t)-1;
+        }
     }
     out_len = 0u;
     while (rin_unicode_iterator_next(&it, &cp)) {
