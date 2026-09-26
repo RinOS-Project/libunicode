@@ -97,11 +97,37 @@ int rin_unicode_decode_utf8_lossy(const char* s, size_t n,
 int rin_unicode_decode_utf16(const uint16_t* s, size_t n, uint32_t* out_cp, size_t* out_len);
 int rin_unicode_encode_utf16(uint16_t* dest, size_t n, uint32_t cp, size_t* out_len);
 
-/* Terminal/UI cell width and extended-grapheme helpers.  Cell width is 0 fo
+/* Terminal/UI cell width and extended-grapheme helpers.  Cell width is 0 for
  * combining/control scalars, 2 for East Asian wide/full-width scalars, and 1
  * otherwise.  Boundary functions return byte offsets into UTF-8 text. */
 int rin_unicode_is_combining(uint32_t cp);
 int rin_unicode_cell_width(uint32_t cp);
+
+/* Return the bounded UAX #29 Grapheme_Cluster_Break property used by the
+ * boundary implementation.  The generated combining/spacing-mark tables are
+ * authoritative for this snapshot; control, prepend, and emoji properties
+ * remain the deliberately bounded product subset documented by this API. */
+typedef enum rin_unicode_grapheme_property {
+    RIN_UNICODE_GRAPHEME_OTHER = 0,
+    RIN_UNICODE_GRAPHEME_CR,
+    RIN_UNICODE_GRAPHEME_LF,
+    RIN_UNICODE_GRAPHEME_CONTROL,
+    RIN_UNICODE_GRAPHEME_EXTEND,
+    RIN_UNICODE_GRAPHEME_ZWJ,
+    RIN_UNICODE_GRAPHEME_SPACING_MARK,
+    RIN_UNICODE_GRAPHEME_PREPEND,
+    RIN_UNICODE_GRAPHEME_L,
+    RIN_UNICODE_GRAPHEME_V,
+    RIN_UNICODE_GRAPHEME_T,
+    RIN_UNICODE_GRAPHEME_LV,
+    RIN_UNICODE_GRAPHEME_LVT,
+    RIN_UNICODE_GRAPHEME_RI
+} rin_unicode_grapheme_property_t;
+
+rin_unicode_grapheme_property_t rin_unicode_grapheme_property(uint32_t cp);
+/* Return whether cp is in the bounded Extended_Pictographic subset used for
+ * the GB11 ZWJ rule.  Full Unicode property coverage remains a data task. */
+int rin_unicode_is_extended_pictographic(uint32_t cp);
 size_t rin_unicode_grapheme_next(const char* s, size_t n, size_t offset);
 size_t rin_unicode_grapheme_prev(const char* s, size_t n, size_t offset);
 

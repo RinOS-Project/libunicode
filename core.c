@@ -242,23 +242,6 @@ static int rin_unicode_is_regional_indicator(uint32_t cp) {
     return cp >= 0x1F1E6u && cp <= 0x1F1FFu;
 }
 
-typedef enum RinGraphemeProperty {
-    RIN_GB_OTHER = 0,
-    RIN_GB_CR,
-    RIN_GB_LF,
-    RIN_GB_CONTROL,
-    RIN_GB_EXTEND,
-    RIN_GB_ZWJ,
-    RIN_GB_SPACING_MARK,
-    RIN_GB_PREPEND,
-    RIN_GB_L,
-    RIN_GB_V,
-    RIN_GB_T,
-    RIN_GB_LV,
-    RIN_GB_LVT,
-    RIN_GB_RI
-} RinGraphemeProperty;
-
 static int rin_unicode_is_spacing_mark(uint32_t cp) {
     return rin_unicode_in_range(
         cp, g_rin_unicode_spacing_mark_ranges,
@@ -274,7 +257,7 @@ static int rin_unicode_is_prepend(uint32_t cp) {
            (cp >= 0x11A84u && cp <= 0x11A89u) || cp == 0x11D46u;
 }
 
-static int rin_unicode_is_extended_pictographic(uint32_t cp) {
+int rin_unicode_is_extended_pictographic(uint32_t cp) {
     return cp == 0x00A9u || cp == 0x00AEu || cp == 0x203Cu ||
            cp == 0x2049u || cp == 0x2122u || cp == 0x2139u ||
            (cp >= 0x2194u && cp <= 0x21FFu) ||
@@ -283,37 +266,38 @@ static int rin_unicode_is_extended_pictographic(uint32_t cp) {
            (cp >= 0x1F000u && cp <= 0x1FAFFu);
 }
 
-static RinGraphemeProperty rin_unicode_grapheme_property(uint32_t cp) {
-    if (cp == 0x000Du) return RIN_GB_CR;
-    if (cp == 0x000Au) return RIN_GB_LF;
-    if (cp == 0x200Du) return RIN_GB_ZWJ;
-    if (cp == 0x200Cu) return RIN_GB_EXTEND;
+rin_unicode_grapheme_property_t rin_unicode_grapheme_property(uint32_t cp) {
+    if (cp == 0x000Du) return RIN_UNICODE_GRAPHEME_CR;
+    if (cp == 0x000Au) return RIN_UNICODE_GRAPHEME_LF;
+    if (cp == 0x200Du) return RIN_UNICODE_GRAPHEME_ZWJ;
+    if (cp == 0x200Cu) return RIN_UNICODE_GRAPHEME_EXTEND;
     if (cp < 0x0020u || (cp >= 0x007Fu && cp <= 0x009Fu) ||
         cp == 0x00ADu || cp == 0x061Cu || cp == 0x180Eu ||
         (cp >= 0x200Bu && cp <= 0x200Fu) ||
         (cp >= 0x2028u && cp <= 0x202Eu) ||
         (cp >= 0x2060u && cp <= 0x206Fu) || cp == 0xFEFFu)
-        return RIN_GB_CONTROL;
-    if (rin_unicode_is_spacing_mark(cp)) return RIN_GB_SPACING_MARK;
-    if (rin_unicode_is_prepend(cp)) return RIN_GB_PREPEND;
+        return RIN_UNICODE_GRAPHEME_CONTROL;
+    if (rin_unicode_is_spacing_mark(cp)) return RIN_UNICODE_GRAPHEME_SPACING_MARK;
+    if (rin_unicode_is_prepend(cp)) return RIN_UNICODE_GRAPHEME_PREPEND;
     if (rin_unicode_is_combining(cp) ||
-        (cp >= 0xE0020u && cp <= 0xE007Fu)) return RIN_GB_EXTEND;
+        (cp >= 0xE0020u && cp <= 0xE007Fu)) return RIN_UNICODE_GRAPHEME_EXTEND;
     if ((cp >= 0x1100u && cp <= 0x115Fu) ||
-        (cp >= 0xA960u && cp <= 0xA97Cu)) return RIN_GB_L;
+        (cp >= 0xA960u && cp <= 0xA97Cu)) return RIN_UNICODE_GRAPHEME_L;
     if ((cp >= 0x1160u && cp <= 0x11A7u) ||
-        (cp >= 0xD7B0u && cp <= 0xD7C6u)) return RIN_GB_V;
+        (cp >= 0xD7B0u && cp <= 0xD7C6u)) return RIN_UNICODE_GRAPHEME_V;
     if ((cp >= 0x11A8u && cp <= 0x11FFu) ||
-        (cp >= 0xD7CBu && cp <= 0xD7FBu)) return RIN_GB_T;
+        (cp >= 0xD7CBu && cp <= 0xD7FBu)) return RIN_UNICODE_GRAPHEME_T;
     if (cp >= 0xAC00u && cp <= 0xD7A3u)
-        return ((cp - 0xAC00u) % 28u) == 0u ? RIN_GB_LV : RIN_GB_LVT;
-    if (rin_unicode_is_regional_indicator(cp)) return RIN_GB_RI;
-    return RIN_GB_OTHER;
+        return ((cp - 0xAC00u) % 28u) == 0u ? RIN_UNICODE_GRAPHEME_LV :
+                                              RIN_UNICODE_GRAPHEME_LVT;
+    if (rin_unicode_is_regional_indicator(cp)) return RIN_UNICODE_GRAPHEME_RI;
+    return RIN_UNICODE_GRAPHEME_OTHER;
 }
 
 size_t rin_unicode_grapheme_next(const char* s, size_t n, size_t offset) {
     uint32_t cp = 0u;
     uint32_t last_non_extend;
-    RinGraphemeProperty previous_property;
+    rin_unicode_grapheme_property_t previous_property;
     size_t consumed = 0u;
     size_t cursor;
     int regional_count = 0;
@@ -323,11 +307,11 @@ size_t rin_unicode_grapheme_next(const char* s, size_t n, size_t offset) {
     last_non_extend = cp;
     previous_property = rin_unicode_grapheme_property(cp);
     cursor = offset + consumed;
-    if (previous_property == RIN_GB_RI) regional_count = 1;
+    if (previous_property == RIN_UNICODE_GRAPHEME_RI) regional_count = 1;
     while (cursor < n) {
         size_t next_len = 0u;
         uint32_t next = 0u;
-        RinGraphemeProperty next_property;
+        rin_unicode_grapheme_property_t next_property;
         int joins = 0;
         (void)rin_unicode_decode_utf8_lossy(s + cursor, n - cursor,
                                            &next, &next_len);
@@ -335,54 +319,58 @@ size_t rin_unicode_grapheme_next(const char* s, size_t n, size_t offset) {
         next_property = rin_unicode_grapheme_property(next);
 
         /* UAX #29 extended grapheme cluster rules GB3 through GB13. */
-        if (previous_property == RIN_GB_CR && next_property == RIN_GB_LF)
+        if (previous_property == RIN_UNICODE_GRAPHEME_CR &&
+            next_property == RIN_UNICODE_GRAPHEME_LF)
             joins = 1;
-        else if (previous_property == RIN_GB_CR ||
-                 previous_property == RIN_GB_LF ||
-                 previous_property == RIN_GB_CONTROL ||
-                 next_property == RIN_GB_CR || next_property == RIN_GB_LF ||
-                 next_property == RIN_GB_CONTROL)
+        else if (previous_property == RIN_UNICODE_GRAPHEME_CR ||
+                 previous_property == RIN_UNICODE_GRAPHEME_LF ||
+                 previous_property == RIN_UNICODE_GRAPHEME_CONTROL ||
+                 next_property == RIN_UNICODE_GRAPHEME_CR ||
+                 next_property == RIN_UNICODE_GRAPHEME_LF ||
+                 next_property == RIN_UNICODE_GRAPHEME_CONTROL)
             joins = 0;
-        else if (previous_property == RIN_GB_L &&
-                 (next_property == RIN_GB_L || next_property == RIN_GB_V ||
-                  next_property == RIN_GB_LV ||
-                  next_property == RIN_GB_LVT))
+        else if (previous_property == RIN_UNICODE_GRAPHEME_L &&
+                 (next_property == RIN_UNICODE_GRAPHEME_L ||
+                  next_property == RIN_UNICODE_GRAPHEME_V ||
+                  next_property == RIN_UNICODE_GRAPHEME_LV ||
+                  next_property == RIN_UNICODE_GRAPHEME_LVT))
             joins = 1;
-        else if ((previous_property == RIN_GB_LV ||
-                  previous_property == RIN_GB_V) &&
-                 (next_property == RIN_GB_V || next_property == RIN_GB_T))
+        else if ((previous_property == RIN_UNICODE_GRAPHEME_LV ||
+                  previous_property == RIN_UNICODE_GRAPHEME_V) &&
+                 (next_property == RIN_UNICODE_GRAPHEME_V ||
+                  next_property == RIN_UNICODE_GRAPHEME_T))
             joins = 1;
-        else if ((previous_property == RIN_GB_LVT ||
-                  previous_property == RIN_GB_T) &&
-                 next_property == RIN_GB_T)
+        else if ((previous_property == RIN_UNICODE_GRAPHEME_LVT ||
+                  previous_property == RIN_UNICODE_GRAPHEME_T) &&
+                 next_property == RIN_UNICODE_GRAPHEME_T)
             joins = 1;
-        else if (next_property == RIN_GB_EXTEND ||
-                 next_property == RIN_GB_ZWJ ||
-                 next_property == RIN_GB_SPACING_MARK)
+        else if (next_property == RIN_UNICODE_GRAPHEME_EXTEND ||
+                 next_property == RIN_UNICODE_GRAPHEME_ZWJ ||
+                 next_property == RIN_UNICODE_GRAPHEME_SPACING_MARK)
             joins = 1;
-        else if (previous_property == RIN_GB_PREPEND)
+        else if (previous_property == RIN_UNICODE_GRAPHEME_PREPEND)
             joins = 1;
-        else if (previous_property == RIN_GB_ZWJ &&
+        else if (previous_property == RIN_UNICODE_GRAPHEME_ZWJ &&
                  zwj_after_pictographic &&
                  rin_unicode_is_extended_pictographic(next))
             joins = 1;
-        else if (previous_property == RIN_GB_RI &&
-                 next_property == RIN_GB_RI &&
+        else if (previous_property == RIN_UNICODE_GRAPHEME_RI &&
+                 next_property == RIN_UNICODE_GRAPHEME_RI &&
                  (regional_count & 1) != 0)
             joins = 1;
         if (!joins) break;
 
         cursor += next_len;
-        if (next_property == RIN_GB_ZWJ) {
+        if (next_property == RIN_UNICODE_GRAPHEME_ZWJ) {
             zwj_after_pictographic =
                 rin_unicode_is_extended_pictographic(last_non_extend);
-        } else if (next_property != RIN_GB_EXTEND) {
+        } else if (next_property != RIN_UNICODE_GRAPHEME_EXTEND) {
             last_non_extend = next;
-            if (next_property != RIN_GB_SPACING_MARK)
+            if (next_property != RIN_UNICODE_GRAPHEME_SPACING_MARK)
                 zwj_after_pictographic = 0;
         }
-        if (next_property == RIN_GB_RI) regional_count++;
-        else if (next_property != RIN_GB_EXTEND) regional_count = 0;
+        if (next_property == RIN_UNICODE_GRAPHEME_RI) regional_count++;
+        else if (next_property != RIN_UNICODE_GRAPHEME_EXTEND) regional_count = 0;
         previous_property = next_property;
     }
     return cursor;
