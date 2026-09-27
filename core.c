@@ -1443,8 +1443,8 @@ int rin_unicode_compare_utf32(const uint32_t* lhs, const uint32_t* rhs) {
     int has_right;
     size_t ignored_length;
     if (!rin_unicode_valid_wstring(lhs, &ignored_length))
-        return rin_unicode_valid_wstring(rhs, &ignored_length) ? -1 : 0;
-    if (!rin_unicode_valid_wstring(rhs, &ignored_length)) return 1;
+        return rin_unicode_valid_wstring(rhs, &ignored_length) ? 1 : 0;
+    if (!rin_unicode_valid_wstring(rhs, &ignored_length)) return -1;
     a.utf8 = (const char*)0;
     a.utf32 = lhs;
     a.queue_length = a.queue_index = 0u;
@@ -1475,22 +1475,27 @@ int rin_unicode_compare_utf8(const char* lhs, const char* rhs) {
     uint32_t right = 0u;
     int has_left;
     int has_right;
-    size_t ignored_length;
-    if (!rin_unicode_cstring_length(lhs ? lhs : "", &ignored_length))
-        return rhs && rin_unicode_cstring_length(rhs, &ignored_length)
+    size_t left_length;
+    size_t right_length;
+    if (!rin_unicode_cstring_length(lhs ? lhs : "", &left_length))
+        return rhs && rin_unicode_cstring_length(rhs, &right_length)
                    ? -1
                    : 0;
-    if (!rin_unicode_cstring_length(rhs ? rhs : "", &ignored_length)) return 1;
+    if (!rin_unicode_cstring_length(rhs ? rhs : "", &right_length)) return 1;
     a.utf8 = lhs ? lhs : "";
     a.utf32 = (const uint32_t*)0;
     a.queue_length = a.queue_index = 0u;
     a.segment_length = 0u;
+    /* The iterator consumes a bounded view; do not re-scan or read past the
+     * validated NUL-terminated input while producing the collation stream. */
+    a.utf8_remaining = left_length;
     a.utf8_mode = 1;
     a.failed = 0;
     b.utf8 = rhs ? rhs : "";
     b.utf32 = (const uint32_t*)0;
     b.queue_length = b.queue_index = 0u;
     b.segment_length = 0u;
+    b.utf8_remaining = right_length;
     b.utf8_mode = 1;
     b.failed = 0;
     for (;;) {
