@@ -7,6 +7,7 @@
 int main(void) {
     static const char words[] = "hello world";
     static const char hard_break[] = "a\nb";
+    static const char crlf_break[] = {'a', '\r', '\n', 'b'};
     static const char vertical_break[] = {'a', '\v', 'b'};
     static const char form_break[] = {'a', '\f', 'b'};
     static const char cjk[] = {
@@ -42,6 +43,7 @@ int main(void) {
     };
     size_t words_len = sizeof(words) - 1u;
     size_t hard_len = sizeof(hard_break) - 1u;
+    size_t crlf_len = sizeof(crlf_break);
     size_t cjk_len = sizeof(cjk) - 1u;
     size_t family_len = sizeof(family) - 1u;
     size_t punctuation_len = sizeof(punctuation) - 1u;
@@ -67,6 +69,12 @@ int main(void) {
         return 4;
     if (rin_unicode_line_break_next(hard_break, hard_len, 0u) != 2u)
         return 5;
+    if (rin_unicode_line_break_opportunity(crlf_break, crlf_len, 2u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(crlf_break, crlf_len, 3u) !=
+            RIN_UNICODE_LINE_BREAK_MANDATORY ||
+        rin_unicode_line_break_next(crlf_break, crlf_len, 0u) != 3u)
+        return 25;
     if (rin_unicode_line_break_opportunity(vertical_break,
                                            sizeof(vertical_break), 2u) !=
         RIN_UNICODE_LINE_BREAK_MANDATORY ||

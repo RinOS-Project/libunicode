@@ -517,6 +517,12 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
     (void)rin_unicode_decode_utf8_lossy(s + offset, n - offset, &next,
                                        &next_len);
     if (next_len == 0u) return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    /* UAX #14 LB5: CR and LF form one mandatory break sequence.  The
+     * boundary between them is not itself a break; treating CR as an
+     * independent hard break would let a line wrapper split CRLF into two
+     * records. */
+    if (previous == 0x000Du && next == 0x000Au)
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (rin_unicode_line_break_is_hard(previous))
         return RIN_UNICODE_LINE_BREAK_MANDATORY;
     if (rin_unicode_line_break_is_non_break_space(first) ||
