@@ -1106,12 +1106,15 @@ size_t rin_unicode_normalize_utf32(uint32_t* dest, size_t dest_cap,
         form == RIN_UNICODE_NORMALIZE_NFKC ||
             form == RIN_UNICODE_NORMALIZE_NFKD
     };
+    if (!rin_unicode_normalization_form_valid(form)) {
+        rin_unicode_normalization_clear_destination(&state);
+        return (size_t)-1;
+    }
     if (!src) {
         rin_unicode_normalization_terminate(&state);
         return 0u;
     }
-    if (!rin_unicode_normalization_form_valid(form) ||
-        (src_len != (size_t)-1 &&
+    if ((src_len != (size_t)-1 &&
          src_len > RIN_UNICODE_MAX_WSTRING_ELEMENTS) ||
         (src_len == (size_t)-1 && !rin_unicode_wstring_length(src, &src_len))) {
         rin_unicode_normalization_clear_destination(&state);
@@ -1144,12 +1147,15 @@ size_t rin_unicode_normalize_utf8(char* dest, size_t dest_cap,
         form == RIN_UNICODE_NORMALIZE_NFKC ||
             form == RIN_UNICODE_NORMALIZE_NFKD
     };
+    if (!rin_unicode_normalization_form_valid(form)) {
+        rin_unicode_normalization_clear_destination(&state);
+        return (size_t)-1;
+    }
     if (!src) {
         rin_unicode_normalization_terminate(&state);
         return 0u;
     }
-    if (!rin_unicode_normalization_form_valid(form) ||
-        !rin_unicode_cstring_length(src, &source_len)) {
+    if (!rin_unicode_cstring_length(src, &source_len)) {
         rin_unicode_normalization_clear_destination(&state);
         return (size_t)-1;
     }
