@@ -17,6 +17,11 @@ int main(void) {
     static const char family[] =
         "\xF0\x9F\x91\xA9\xE2\x80\x8D\xF0\x9F\x91\xA9" "x";
     static const char punctuation[] = "(word)";
+    static const char quotation[] = "\xE2\x80\x9Cword\xE2\x80\x9D";
+    static const char japanese_nonstarter[] = {
+        (char)0xE3, (char)0x81, (char)0x82,
+        (char)0xE3, (char)0x81, (char)0x83, '\0'
+    };
     static const char no_break_space[] =
         {'a', (char)0xC2, (char)0xA0, 'b'};
     static const char figure_space[] =
@@ -40,6 +45,8 @@ int main(void) {
     size_t cjk_len = sizeof(cjk) - 1u;
     size_t family_len = sizeof(family) - 1u;
     size_t punctuation_len = sizeof(punctuation) - 1u;
+    size_t quotation_len = sizeof(quotation) - 1u;
+    size_t japanese_nonstarter_len = sizeof(japanese_nonstarter) - 1u;
     size_t no_break_space_len = sizeof(no_break_space);
     size_t figure_space_len = sizeof(figure_space);
     size_t narrow_no_break_space_len = sizeof(narrow_no_break_space);
@@ -86,6 +93,18 @@ int main(void) {
     if (rin_unicode_line_break_opportunity(punctuation, punctuation_len, 5u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 11;
+    if (rin_unicode_line_break_opportunity(quotation, quotation_len, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(quotation, quotation_len, 7u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 23;
+    if (rin_unicode_line_break_opportunity(japanese_nonstarter,
+                                           japanese_nonstarter_len, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_next(japanese_nonstarter,
+                                    japanese_nonstarter_len, 0u) !=
+            japanese_nonstarter_len)
+        return 24;
     if (rin_unicode_line_break_opportunity(NULL, 0u, 0u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 12;

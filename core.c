@@ -441,6 +441,8 @@ static int rin_unicode_line_break_is_ideographic(uint32_t cp) {
 
 static int rin_unicode_line_break_is_open(uint32_t cp) {
     return cp == 0x0028u || cp == 0x005Bu || cp == 0x007Bu ||
+           cp == 0x00ABu || cp == 0x2018u || cp == 0x201Cu ||
+           cp == 0x2039u ||
            cp == 0x3008u || cp == 0x300Au || cp == 0x300Cu ||
            cp == 0x300Eu || cp == 0x3010u || cp == 0x3014u ||
            cp == 0x3016u || cp == 0x3018u || cp == 0x301Au ||
@@ -449,6 +451,8 @@ static int rin_unicode_line_break_is_open(uint32_t cp) {
 
 static int rin_unicode_line_break_is_close(uint32_t cp) {
     return cp == 0x0029u || cp == 0x005Du || cp == 0x007Du ||
+           cp == 0x00BBu || cp == 0x2019u || cp == 0x201Du ||
+           cp == 0x203Au ||
            cp == 0x002Cu || cp == 0x002Eu || cp == 0x003Au ||
            cp == 0x003Bu || cp == 0x0021u || cp == 0x003Fu ||
            cp == 0x3001u || cp == 0x3002u || cp == 0x3009u ||
@@ -457,6 +461,21 @@ static int rin_unicode_line_break_is_close(uint32_t cp) {
            cp == 0x3019u || cp == 0x301Bu || cp == 0xFF09u ||
            cp == 0xFF0Cu || cp == 0xFF0Eu || cp == 0xFF3Du ||
            cp == 0xFF5Du;
+}
+
+static int rin_unicode_line_break_is_nonstarter(uint32_t cp) {
+    /* A bounded CJ/NS subset: these characters must not begin a line after
+     * an ideograph.  They remain ordinary grapheme members, so this policy
+     * only removes the break before them. */
+    return (cp >= 0x3041u && cp <= 0x3049u && (cp & 1u) != 0u) ||
+           cp == 0x3063u || cp == 0x3083u || cp == 0x3085u ||
+           cp == 0x3087u || cp == 0x308Eu || cp == 0x3095u ||
+           cp == 0x3096u || cp == 0x30A1u || cp == 0x30A3u ||
+           cp == 0x30A5u || cp == 0x30A7u || cp == 0x30A9u ||
+           cp == 0x30C3u || cp == 0x30E3u || cp == 0x30E5u ||
+           cp == 0x30E7u || cp == 0x30EEu || cp == 0x30F5u ||
+           cp == 0x30F6u || cp == 0x30FCu || cp == 0x30FDu ||
+           cp == 0x30FEu;
 }
 
 static int rin_unicode_line_break_is_boundary(const char* s, size_t n,
@@ -506,6 +525,8 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
         rin_unicode_line_break_is_word_joiner(first) ||
         rin_unicode_line_break_is_word_joiner(previous) ||
         rin_unicode_line_break_is_word_joiner(next))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    if (rin_unicode_line_break_is_nonstarter(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (rin_unicode_line_break_is_hard(next) ||
         rin_unicode_line_break_is_extend(next))
