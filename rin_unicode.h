@@ -173,6 +173,9 @@ size_t rin_unicode_casefold_locale(uint32_t cp, const char* locale,
 size_t rin_unicode_normalize_utf32(uint32_t* dest, size_t dest_cap, const uint32_t* src, size_t src_len, int form);
 size_t rin_unicode_normalize_utf8(char* dest, size_t dest_cap, const char* src, int form);
 size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32_t* src);
+/* UTF-8 transform is the lossy comparison/key path: each ill-formed maximal
+ * subpart is replaced by one U+FFFD.  Use rin_unicode_normalize_utf8() when
+ * malformed input must be rejected instead. */
 size_t rin_unicode_transform_utf8(char* dest, size_t dest_cap, const char* src);
 /* Invalid or unbounded UTF-32 input sorts after valid input.  Since this
  * comparison API has no error result, two invalid inputs compare equal. */

@@ -1157,6 +1157,7 @@ typedef struct RinUnicodeTransformIterator {
     size_t queue_length;
     size_t queue_index;
     size_t segment_length;
+    size_t utf8_remaining;
     int utf8_mode;
     int failed;
 } RinUnicodeTransformIterator;
@@ -1223,25 +1224,25 @@ static int rin_unicode_iterator_feed_scalar(
 
 static int rin_unicode_iterator_fill_utf8(RinUnicodeTransformIterator* it) {
     uint32_t cp = 0u;
-    size_t source_length;
     size_t consumed = 0u;
     if (!it || !it->utf8 || it->failed) return 0;
     it->queue_index = 0u;
     it->queue_length = 0u;
-    while (it->queue_length == 0u && *it->utf8 != '\0') {
-        if (!rin_unicode_cstring_length(it->utf8, &source_length) ||
-            rin_unicode_decode_utf8(it->utf8, source_length, &cp, &consumed) !=
-                RIN_UNICODE_OK) {
-            cp = 0xFFFDu;
-            consumed = 1u;
+    while (it->queue_length == 0u && it->utf8_remaining != 0u) {
+        (void)rin_unicode_decode_utf8_lossy(it->utf8, it->utf8_remaining,
+                                            &cp, &consumed);
+        if (consumed == 0u || consumed > it->utf8_remaining) {
+            it->failed = 1;
+            return 0;
         }
         it->utf8 += consumed;
+        it->utf8_remaining -= consumed;
         if (!rin_unicode_iterator_feed_scalar(it, cp)) {
             it->failed = 1;
             return 0;
         }
     }
-    if (*it->utf8 == '\0' && it->segment_length != 0u &&
+    if (it->utf8_remaining == 0u && it->segment_length != 0u &&
         it->queue_length == 0u &&
         !rin_unicode_iterator_flush_segment(it))
         return 0;
@@ -1288,6 +1289,7 @@ size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32
     it.utf32 = src;
     it.queue_length = it.queue_index = 0u;
     it.segment_length = 0u;
+    it.utf8_remaining = 0u;
     it.utf8_mode = 0;
     it.failed = 0;
     if (src && !rin_unicode_wstring_length(src, &source_length)) {
@@ -1329,12 +1331,14 @@ size_t rin_unicode_transform_utf8(char* dest, size_t dest_cap, const char* src) 
     it.utf32 = (const uint32_t*)0;
     it.queue_length = it.queue_index = 0u;
     it.segment_length = 0u;
+    it.utf8_remaining = 0u;
     it.utf8_mode = 1;
     it.failed = 0;
     if (src && !rin_unicode_cstring_length(src, &source_length)) {
         if (dest && dest_cap > 0u) dest[0] = '\0';
         return (size_t)-1;
     }
+    it.utf8_remaining = src ? source_length : 0u;
     out_len = 0u;
     while (rin_unicode_iterator_next(&it, &cp)) {
         if (rin_unicode_append_utf8_cstring(dest, dest_cap, &out_len, cp) !=
