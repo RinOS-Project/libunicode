@@ -532,6 +532,10 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
         rin_unicode_line_break_is_word_joiner(previous) ||
         rin_unicode_line_break_is_word_joiner(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    /* UAX #14 LB7: a break is not allowed immediately before a space.  This
+     * also prevents a run of ordinary spaces from being split internally. */
+    if (rin_unicode_line_break_is_space(next))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (rin_unicode_line_break_is_nonstarter(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (rin_unicode_line_break_is_hard(next) ||

@@ -6,6 +6,7 @@
 
 int main(void) {
     static const char words[] = "hello world";
+    static const char multiple_spaces[] = {'a', ' ', ' ', 'b'};
     static const char hard_break[] = "a\nb";
     static const char crlf_break[] = {'a', '\r', '\n', 'b'};
     static const char vertical_break[] = {'a', '\v', 'b'};
@@ -42,6 +43,7 @@ int main(void) {
         {'a', (char)0xE2, (char)0x81, (char)0xA4, 'b', '\0'}
     };
     size_t words_len = sizeof(words) - 1u;
+    size_t multiple_spaces_len = sizeof(multiple_spaces);
     size_t hard_len = sizeof(hard_break) - 1u;
     size_t crlf_len = sizeof(crlf_break);
     size_t cjk_len = sizeof(cjk) - 1u;
@@ -64,6 +66,13 @@ int main(void) {
         return 2;
     if (rin_unicode_line_break_next(words, words_len, 0u) != 6u)
         return 3;
+    if (rin_unicode_line_break_opportunity(multiple_spaces,
+                                           multiple_spaces_len, 2u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(multiple_spaces,
+                                           multiple_spaces_len, 3u) !=
+            RIN_UNICODE_LINE_BREAK_ALLOWED)
+        return 26;
     if (rin_unicode_line_break_opportunity(hard_break, hard_len, 2u) !=
         RIN_UNICODE_LINE_BREAK_MANDATORY)
         return 4;
