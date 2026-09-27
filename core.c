@@ -735,6 +735,20 @@ static uint8_t rin_unicode_combining_class(uint32_t cp) {
 }
 
 static uint32_t rin_unicode_try_compose(uint32_t lhs, uint32_t rhs) {
+    /* Hangul syllable composition is algorithmic and is not represented by
+     * the generated composition table.  Keep it here so all four public
+     * normalization forms share the same bounded path. */
+    if (lhs >= 0x1100u && lhs < 0x1100u + 19u &&
+        rhs >= 0x1161u && rhs < 0x1161u + 21u) {
+        const uint32_t l_index = lhs - 0x1100u;
+        const uint32_t v_index = rhs - 0x1161u;
+        return 0xac00u + (l_index * 21u + v_index) * 28u;
+    }
+    if (lhs >= 0xac00u && lhs < 0xac00u + 11172u &&
+        (lhs - 0xac00u) % 28u == 0u &&
+        rhs > 0x11a7u && rhs < 0x11a7u + 28u)
+        return lhs + (rhs - 0x11a7u);
+
     size_t first = 0u;
     size_t last = g_rin_unicode_composition_count;
     while (first < last) {
@@ -795,6 +809,21 @@ static size_t rin_unicode_emit_scalar(uint32_t* dest, size_t dest_cap, size_t of
 static size_t rin_unicode_decompose_scalar(uint32_t cp, int compatibility, uint32_t* dest, size_t dest_cap, size_t offset) {
     const RinUnicodeDecompositionEntry* entry;
     size_t i;
+
+    /* Hangul syllables have canonical algorithmic decompositions. */
+    if (cp >= 0xac00u && cp < 0xac00u + 11172u) {
+        const uint32_t s_index = cp - 0xac00u;
+        offset = rin_unicode_emit_scalar(
+            dest, dest_cap, offset, 0x1100u + s_index / (21u * 28u));
+        offset = rin_unicode_emit_scalar(
+            dest, dest_cap, offset,
+            0x1161u + (s_index % (21u * 28u)) / 28u);
+        if (s_index % 28u != 0u)
+            offset = rin_unicode_emit_scalar(
+                dest, dest_cap, offset, 0x11a7u + s_index % 28u);
+        return offset;
+    }
+
     entry = rin_unicode_find_decomposition(cp, compatibility);
     if (!entry) return rin_unicode_emit_scalar(dest, dest_cap, offset, cp);
     for (i = 0u; i < entry->length; ++i) {
@@ -1054,6 +1083,16 @@ static int rin_unicode_normalization_feed(RinUnicodeNormalizationState* state,
         uint32_t item = decomposed[index];
         uint8_t canonical_class = rin_unicode_combining_class(item);
         size_t position;
+        if (state->compose && canonical_class == 0u &&
+            state->segment_length != 0u) {
+            const size_t last = state->segment_length - 1u;
+            const uint32_t composed = rin_unicode_try_compose(
+                state->segment[last], item);
+            if (composed != 0u && state->classes[last] == 0u) {
+                state->segment[last] = composed;
+                continue;
+            }
+        }
         if (canonical_class == 0u && state->segment_length != 0u &&
             rin_unicode_normalization_flush(state) != RIN_UNICODE_OK)
             return RIN_UNICODE_INVALID;
