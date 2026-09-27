@@ -382,6 +382,7 @@ static void rin_unicode_parse_locale_name(char const* name, RinUnicodeParsedLoca
 static RinUnicodeLocale const* rin_unicode_find_locale_by_parts(char const* language, char const* script, char const* region)
 {
     RinUnicodeLocale const* language_match = (RinUnicodeLocale const*)0;
+    RinUnicodeLocale const* neutral_match = (RinUnicodeLocale const*)0;
     RinUnicodeLocale const* script_match = (RinUnicodeLocale const*)0;
     size_t i;
     if (!language || language[0] == '\0') return g_locale_root;
@@ -391,6 +392,10 @@ static RinUnicodeLocale const* rin_unicode_find_locale_by_parts(char const* lang
         if (region && region[0] != '\0' && rin_unicode_ascii_ieq(locale->territory, region)) {
             if (!script || script[0] == '\0' || rin_unicode_ascii_ieq(locale->script, script)) return locale;
         }
+        if ((!region || region[0] == '\0') && (!script || script[0] == '\0') &&
+            locale->territory[0] == '\0' && neutral_match == (RinUnicodeLocale const*)0) {
+            neutral_match = locale;
+        }
         if ((!region || region[0] == '\0') &&
             script && script[0] != '\0' &&
             rin_unicode_ascii_ieq(locale->script, script) &&
@@ -399,6 +404,7 @@ static RinUnicodeLocale const* rin_unicode_find_locale_by_parts(char const* lang
         }
         if (language_match == (RinUnicodeLocale const*)0) language_match = locale;
     }
+    if (neutral_match) return neutral_match;
     if (script_match) return script_match;
     if (language_match) return language_match;
     return (RinUnicodeLocale const*)0;
