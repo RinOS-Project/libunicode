@@ -366,8 +366,10 @@ size_t rin_unicode_grapheme_next(const char* s, size_t n, size_t offset) {
                 rin_unicode_is_extended_pictographic(last_non_extend);
         } else if (next_property != RIN_UNICODE_GRAPHEME_EXTEND) {
             last_non_extend = next;
-            if (next_property != RIN_UNICODE_GRAPHEME_SPACING_MARK)
-                zwj_after_pictographic = 0;
+            /* GB11 only permits Extend* between the pictograph and ZWJ.
+             * SpacingMark joins by GB9, but it is not transparent to the
+             * Extended_Pictographic Extend* ZWJ look-behind. */
+            zwj_after_pictographic = 0;
         }
         if (next_property == RIN_UNICODE_GRAPHEME_RI) regional_count++;
         else if (next_property != RIN_UNICODE_GRAPHEME_EXTEND) regional_count = 0;
