@@ -1388,6 +1388,70 @@ static int rin_unicode_datetime_valid(const rin_unicode_datetime_t* value,
     return 1;
 }
 
+static int rin_unicode_datetime_jan1_weekday(
+    const rin_unicode_datetime_t* value, unsigned day_of_year)
+{
+    int weekday = value->weekday - (int)((day_of_year - 1u) % 7u);
+    if (weekday < 0) weekday += 7;
+    return weekday;
+}
+
+static unsigned rin_unicode_datetime_iso_weeks(int year, int jan1_weekday)
+{
+    return (jan1_weekday == 4 ||
+            (jan1_weekday == 3 && rin_unicode_datetime_leap_year(year)))
+               ? 53u
+               : 52u;
+}
+
+static int rin_unicode_datetime_iso_week(
+    const rin_unicode_datetime_t* value, unsigned day_of_year,
+    unsigned* week, int* iso_year)
+{
+    const int jan1_weekday =
+        rin_unicode_datetime_jan1_weekday(value, day_of_year);
+    const int iso_weekday = value->weekday == 0 ? 7 : value->weekday;
+    int calculated_week =
+        ((int)day_of_year - iso_weekday + 10) / 7;
+    int calculated_year = value->year;
+    unsigned weeks;
+
+    if (calculated_week < 1) {
+        const int previous_year = value->year - 1;
+        const int previous_days =
+            rin_unicode_datetime_leap_year(previous_year) ? 366 : 365;
+        const int previous_jan1 =
+            (jan1_weekday - (previous_days % 7) + 7) % 7;
+        if (previous_year < 0) return 0;
+        calculated_year = previous_year;
+        calculated_week = (int)rin_unicode_datetime_iso_weeks(
+            previous_year, previous_jan1);
+    } else {
+        weeks = rin_unicode_datetime_iso_weeks(value->year, jan1_weekday);
+        if ((unsigned)calculated_week > weeks) {
+            const int next_year = value->year + 1;
+            if (next_year > 9999) return 0;
+            calculated_year = next_year;
+            calculated_week = 1;
+        }
+    }
+    if (calculated_year < 0 || calculated_year > 9999 ||
+        calculated_week < 1 || calculated_week > 53)
+        return 0;
+    *week = (unsigned)calculated_week;
+    *iso_year = calculated_year;
+    return 1;
+}
+
+static int rin_unicode_datetime_pattern_bounded(const char* pattern)
+{
+    size_t index;
+    if (!pattern) return 0;
+    for (index = 0u; index < RIN_UNICODE_MAX_DATETIME_FORMAT_BYTES; ++index)
+        if (pattern[index] == '\0') return 1;
+    return 0;
+}
+
 static int rin_unicode_datetime_append(char* output, size_t capacity,
                                        size_t* written, const char* text)
 {
@@ -1482,6 +1546,9 @@ static int rin_unicode_datetime_append_pattern(
                     output, capacity, written, (unsigned)value->day, 2u, 0))
                 return 0;
             break;
+        case 'D':
+            nested = "%m/%d/%y";
+            break;
         case 'e':
             if (!rin_unicode_datetime_append_fixed(
                     output, capacity, written, (unsigned)value->day, 2u, 1))
@@ -1498,6 +1565,19 @@ static int rin_unicode_datetime_append_pattern(
                     output, capacity, written, (unsigned)value->day, 2u, 0))
                 return 0;
             break;
+        case 'G':
+        case 'g': {
+            unsigned iso_week;
+            int iso_year;
+            if (!rin_unicode_datetime_iso_week(value, day_of_year, &iso_week,
+                                                &iso_year) ||
+                !rin_unicode_datetime_append_fixed(
+                    output, capacity, written,
+                    (unsigned)(conversion == 'G' ? iso_year : iso_year % 100),
+                    conversion == 'G' ? 4u : 2u, 0))
+                return 0;
+            break;
+        }
         case 'H':
             if (!rin_unicode_datetime_append_fixed(
                     output, capacity, written, (unsigned)value->hour, 2u, 0))
@@ -1557,11 +1637,44 @@ static int rin_unicode_datetime_append_pattern(
                     (unsigned)(value->weekday == 0 ? 7 : value->weekday),
                     1u, 0)) return 0;
             break;
+        case 'U': {
+            const int jan1_weekday =
+                rin_unicode_datetime_jan1_weekday(value, day_of_year);
+            const unsigned week =
+                (day_of_year - 1u +
+                 (unsigned)(jan1_weekday == 0 ? 7 : jan1_weekday)) /
+                7u;
+            if (!rin_unicode_datetime_append_fixed(output, capacity, written,
+                                                   week, 2u, 0)) return 0;
+            break;
+        }
+        case 'V': {
+            unsigned week;
+            int iso_year;
+            if (!rin_unicode_datetime_iso_week(value, day_of_year, &week,
+                                                &iso_year) ||
+                !rin_unicode_datetime_append_fixed(output, capacity, written,
+                                                   week, 2u, 0)) return 0;
+            break;
+        }
         case 'w':
             if (!rin_unicode_datetime_append_fixed(
                     output, capacity, written, (unsigned)value->weekday, 1u, 0))
                 return 0;
             break;
+        case 'W': {
+            const int jan1_weekday =
+                rin_unicode_datetime_jan1_weekday(value, day_of_year);
+            const unsigned monday_offset =
+                (unsigned)((jan1_weekday + 6) % 7);
+            const unsigned week =
+                (day_of_year - 1u +
+                 (monday_offset == 0u ? 7u : monday_offset)) /
+                7u;
+            if (!rin_unicode_datetime_append_fixed(output, capacity, written,
+                                                   week, 2u, 0)) return 0;
+            break;
+        }
         case 'x':
             nested = names->date_format;
             break;
@@ -1592,23 +1705,19 @@ static int rin_unicode_datetime_append_pattern(
     return 1;
 }
 
-size_t rin_unicode_locale_format_datetime(
+size_t rin_unicode_locale_format_datetime_pattern(
     char* output, size_t output_capacity,
-    const rin_unicode_datetime_t* value, char conversion)
+    const rin_unicode_datetime_t* value, const char* pattern)
 {
     RinUnicodeTimeNames const* names;
-    const char* pattern;
     unsigned day_of_year;
     size_t written = 0u;
     if (output && output_capacity != 0u) output[0] = '\0';
     if (!output || output_capacity == 0u || !value ||
-        (conversion != 'c' && conversion != 'x' && conversion != 'X') ||
+        !rin_unicode_datetime_pattern_bounded(pattern) ||
         !rin_unicode_datetime_valid(value, &day_of_year)) return 0u;
     rin_unicode_locale_lock();
     names = rin_unicode_current_time_names_unlocked();
-    pattern = conversion == 'c' ? names->date_time_format
-                                : conversion == 'x' ? names->date_format
-                                                    : names->time_format;
     rin_unicode_locale_unlock();
     if (!rin_unicode_datetime_append_pattern(output, output_capacity, &written,
                                              pattern, names, value,
@@ -1618,6 +1727,26 @@ size_t rin_unicode_locale_format_datetime(
     }
     output[written] = '\0';
     return written;
+}
+
+size_t rin_unicode_locale_format_datetime(
+    char* output, size_t output_capacity,
+    const rin_unicode_datetime_t* value, char conversion)
+{
+    RinUnicodeTimeNames const* names;
+    const char* pattern;
+    if (output && output_capacity != 0u) output[0] = '\0';
+    if (!output || output_capacity == 0u || !value ||
+        (conversion != 'c' && conversion != 'x' && conversion != 'X'))
+        return 0u;
+    rin_unicode_locale_lock();
+    names = rin_unicode_current_time_names_unlocked();
+    pattern = conversion == 'c' ? names->date_time_format
+                                : conversion == 'x' ? names->date_format
+                                                    : names->time_format;
+    rin_unicode_locale_unlock();
+    return rin_unicode_locale_format_datetime_pattern(
+        output, output_capacity, value, pattern);
 }
 
 int rin_unicode_strcoll(char const* s1, char const* s2) { return rin_unicode_compare_utf8(s1 ? s1 : "", s2 ? s2 : ""); }
@@ -1644,6 +1773,13 @@ size_t rin_locale_format_datetime(char* output, size_t output_capacity,
 {
     return rin_unicode_locale_format_datetime(output, output_capacity, value,
                                               conversion);
+}
+size_t rin_locale_format_datetime_pattern(
+    char* output, size_t output_capacity,
+    const rin_unicode_datetime_t* value, const char* pattern)
+{
+    return rin_unicode_locale_format_datetime_pattern(
+        output, output_capacity, value, pattern);
 }
 
 /* `locale_t` is intentionally opaque at the public boundary, but the libc

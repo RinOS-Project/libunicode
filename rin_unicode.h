@@ -251,10 +251,10 @@ const char* rin_unicode_locale_am_pm(int hour);
 const char* rin_unicode_locale_time_format(char conversion);
 /* Expand the selected LC_TIME pattern for a bounded civil date/time.  The
  * supported conversion is c/x/X, and the catalog pattern may use the
- * documented strftime subset: a/A/b/B/C/d/e/F/H/I/j/m/M/n/p/R/r/S/T/u/w/y/Y
- * and %.  The date uses the proleptic Gregorian calendar, year 0..9999, and
- * weekday 0..6 with Sunday=0.  Invalid values, unsupported conversions, and
- * insufficient output space clear output and return zero. */
+ * documented strftime subset: a/A/b/B/C/d/D/e/F/G/g/H/I/j/m/M/n/p/R/r/S/T
+ * U/V/W/u/w/x/X/y/Y and %.  The date uses the proleptic Gregorian calendar,
+ * year 0..9999, and weekday 0..6 with Sunday=0.  Invalid values, unsupported
+ * conversions, and insufficient output space clear output and return zero. */
 typedef struct rin_unicode_datetime {
     int32_t year;
     int32_t month;
@@ -267,6 +267,13 @@ typedef struct rin_unicode_datetime {
 size_t rin_unicode_locale_format_datetime(
     char* output, size_t output_capacity,
     const rin_unicode_datetime_t* value, char conversion);
+/* Expand a caller-owned bounded strftime pattern using the current LC_TIME
+ * snapshot.  The pattern must be NUL-terminated within
+ * RIN_UNICODE_MAX_DATETIME_FORMAT_BYTES.  Locale data remains library-owned;
+ * the caller owns the output buffer. */
+size_t rin_unicode_locale_format_datetime_pattern(
+    char* output, size_t output_capacity,
+    const rin_unicode_datetime_t* value, const char* pattern);
 int rin_unicode_strcoll(const char* s1, const char* s2);
 size_t rin_unicode_strxfrm(char* dest, const char* src, size_t n);
 int rin_unicode_wcscoll32(const uint32_t* s1, const uint32_t* s2);
@@ -288,6 +295,9 @@ const char* rin_locale_time_format(char conversion);
 size_t rin_locale_format_datetime(char* output, size_t output_capacity,
                                   const rin_unicode_datetime_t* value,
                                   char conversion);
+size_t rin_locale_format_datetime_pattern(
+    char* output, size_t output_capacity,
+    const rin_unicode_datetime_t* value, const char* pattern);
 int rin_isalnum(int c);
 int rin_isalpha(int c);
 int rin_isblank(int c);
