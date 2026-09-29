@@ -3,7 +3,7 @@
 #ifndef RIN_UNICODE_GENERATED_LOCALE_CATALOG_H
 #define RIN_UNICODE_GENERATED_LOCALE_CATALOG_H
 
-#define RIN_UNICODE_GENERATED_LOCALE_COUNT 84u
+#define RIN_UNICODE_GENERATED_LOCALE_COUNT 86u
 
 typedef struct RinUnicodeGeneratedLocale {
     const char* name;
@@ -372,6 +372,19 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "fr-BE",
         "fr",
         "BE",
+        "Latn",
+        "UTF-8",
+        {
+            ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
+            ",", ".", "\x03", "", "-",
+            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+        }
+    },
+    {
+        "ca_ES.UTF-8",
+        "ca-ES",
+        "ca",
+        "ES",
         "Latn",
         "UTF-8",
         {
@@ -826,6 +839,19 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "nl.UTF-8",
         "nl",
         "nl",
+        "",
+        "Latn",
+        "UTF-8",
+        {
+            ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
+            ",", ".", "\x03", "", "-",
+            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+        }
+    },
+    {
+        "ca.UTF-8",
+        "ca",
+        "ca",
         "",
         "Latn",
         "UTF-8",
