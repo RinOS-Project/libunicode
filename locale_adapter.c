@@ -2,6 +2,10 @@
 #include "../libc/locale.h"
 #include <generated_locale_catalog.h>
 #include <stdlib.h>
+#if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
+    defined(RIN_USERSPACE) && RIN_USERSPACE
+#include "../libc/internal/rin_environment_runtime.h"
+#endif
 
 #define LC_CTYPE 0
 #define LC_NUMERIC 1
@@ -482,26 +486,51 @@ static char const* rin_unicode_locale_environment_name(int category)
 static RinUnicodeLocale const* rin_unicode_locale_from_environment(
     int category, RinUnicodeDigitSet* digit_set_out)
 {
-    char const* name = getenv("LC_ALL");
+    char const* name;
     char const* category_name;
-    RinUnicodeLocale const* selected;
+    RinUnicodeLocale const* selected = g_locale_root;
+#if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
+    defined(RIN_USERSPACE) && RIN_USERSPACE
+    unsigned int environment_epoch;
+    char** environment = __rin_env_read_begin(&environment_epoch);
+    name = __rin_env_get_from_snapshot(environment, "LC_ALL");
+#else
+    name = getenv("LC_ALL");
+#endif
     if (name && name[0] != '\0') {
-        if (rin_unicode_find_locale_selection(name, &selected, digit_set_out))
-            return selected;
-        if (digit_set_out) *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
-        return g_locale_root;
+        if (!rin_unicode_find_locale_selection(name, &selected, digit_set_out) &&
+            digit_set_out)
+            *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
+    } else {
+        category_name = rin_unicode_locale_environment_name(category);
+#if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
+    defined(RIN_USERSPACE) && RIN_USERSPACE
+        name = category_name
+            ? __rin_env_get_from_snapshot(environment, category_name)
+            : (char const*)0;
+#else
+        name = category_name ? getenv(category_name) : (char const*)0;
+#endif
+        if (!name || name[0] == '\0') {
+#if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
+    defined(RIN_USERSPACE) && RIN_USERSPACE
+            name = __rin_env_get_from_snapshot(environment, "LANG");
+#else
+            name = getenv("LANG");
+#endif
+        }
+        if (!name || name[0] == '\0') {
+            if (digit_set_out) *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
+        } else if (!rin_unicode_find_locale_selection(
+                       name, &selected, digit_set_out) && digit_set_out) {
+            *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
+        }
     }
-    category_name = rin_unicode_locale_environment_name(category);
-    name = category_name ? getenv(category_name) : (char const*)0;
-    if (!name || name[0] == '\0') name = getenv("LANG");
-    if (!name || name[0] == '\0') {
-        if (digit_set_out) *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
-        return g_locale_root;
-    }
-    if (rin_unicode_find_locale_selection(name, &selected, digit_set_out))
-        return selected;
-    if (digit_set_out) *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
-    return g_locale_root;
+#if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
+    defined(RIN_USERSPACE) && RIN_USERSPACE
+    __rin_env_read_end(environment_epoch);
+#endif
+    return selected;
 }
 
 char* rin_unicode_setlocale(int category, char const* locale)
