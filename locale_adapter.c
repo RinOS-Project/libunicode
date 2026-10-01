@@ -135,7 +135,8 @@ static int rin_unicode_locale_syntax_valid(char const* name)
     for (index = 0u; index < length; ++index) {
         unsigned char ch = (unsigned char)name[index];
         if ((ch == ' ' || ch == '\t') && !saw_nonspace) continue;
-        if (ch == ' ' || ch == '\t' || ch < 0x20u || ch == 0x7Fu) return 0;
+        if (ch == ' ' || ch == '\t' || ch < 0x20u || ch >= 0x7Fu)
+            return 0;
         saw_nonspace = 1;
         if (ch == '-' || ch == '_') {
             if (index == 0u || previous == '-' || previous == '_' ||
