@@ -121,6 +121,39 @@ static int rin_unicode_locale_name_length(char const* name, size_t* length_out)
     return 0;
 }
 
+/* Keep the product locale resolver from treating an empty subtag as a
+ * best-effort prefix match.  The field parser intentionally falls back from
+ * an unsupported but well-formed catalog variant; it must not do that for
+ * malformed separators such as `en--US` or `en-US-`. */
+static int rin_unicode_locale_syntax_valid(char const* name)
+{
+    size_t length;
+    size_t index;
+    char previous = '\0';
+    int saw_nonspace = 0;
+    if (!name || !rin_unicode_locale_name_length(name, &length)) return 0;
+    for (index = 0u; index < length; ++index) {
+        unsigned char ch = (unsigned char)name[index];
+        if ((ch == ' ' || ch == '\t') && !saw_nonspace) continue;
+        if (ch == ' ' || ch == '\t' || ch < 0x20u || ch == 0x7Fu) return 0;
+        saw_nonspace = 1;
+        if (ch == '-' || ch == '_') {
+            if (index == 0u || previous == '-' || previous == '_' ||
+                previous == '.' || previous == '@' || index + 1u == length)
+                return 0;
+            if (name[index + 1u] == '-' || name[index + 1u] == '_' ||
+                name[index + 1u] == '.' || name[index + 1u] == '@')
+                return 0;
+        } else if (ch == '.' || ch == '@') {
+            if (index == 0u || previous == '-' || previous == '_' ||
+                previous == '.' || previous == '@' || index + 1u == length)
+                return 0;
+        }
+        previous = (char)ch;
+    }
+    return 1;
+}
+
 static int rin_unicode_ascii_all_alpha(char const* text)
 {
     size_t i = 0u;
@@ -419,7 +452,8 @@ static RinUnicodeLocale const* rin_unicode_find_locale_base(char const* name)
     RinUnicodeParsedLocale parsed;
     size_t ignored_length;
     if (!name) return g_locale_root;
-    if (!rin_unicode_locale_name_length(name, &ignored_length))
+    if (!rin_unicode_locale_name_length(name, &ignored_length) ||
+        !rin_unicode_locale_syntax_valid(name))
         return (RinUnicodeLocale const*)0;
     if (name[0] == '\0' ||
         rin_unicode_ascii_ieq(name, "C") ||
