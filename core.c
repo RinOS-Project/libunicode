@@ -32,6 +32,7 @@ typedef struct RinUnicodeCaseFoldEntry {
 #include "generated_data.h"
 #include "extended_pictographic_data.h"
 #include "grapheme_break_data.h"
+#include "line_break_data.h"
 
 #define RIN_UNICODE_DECOMP_SEGMENT 18u
 #define RIN_UNICODE_NORMALIZATION_SEGMENT 64u
@@ -542,17 +543,15 @@ static int rin_unicode_line_break_is_nonstarter(uint32_t cp) {
 }
 
 static int rin_unicode_line_break_is_break_after(uint32_t cp) {
-    /* Bounded UAX #14 BA coverage.  These hyphen-like characters permit a
-     * break after themselves; the surrounding public line-break contract
-     * still keeps grapheme clusters and no-break controls intact. */
-    return cp == 0x002Du || cp == 0x058Au || cp == 0x05BEu ||
-           cp == 0x1400u || cp == 0x1806u || cp == 0x2010u ||
-           cp == 0x2012u || cp == 0x2013u || cp == 0x2014u ||
-           cp == 0x2E17u ||
-           cp == 0x2E1Au || (cp >= 0x2E3Au && cp <= 0x2E3Bu) ||
-           cp == 0x2E40u ||
-           cp == 0xFE31u || cp == 0xFE32u || cp == 0xFE58u ||
-           cp == 0xFE63u || cp == 0xFF0Du || cp == 0x10EADu;
+    /* Unicode 13.0.0 BA data covers punctuation, spaces, and script-specific
+     * separators.  Keep the explicit HY and B2 cases used by this bounded
+     * policy in addition to the normative BA table.  U+1806 and U+FE31 are
+     * retained as legacy BA-equivalent cases from the public contract. */
+    return cp == 0x002Du || cp == 0x1806u || cp == 0x2014u ||
+           cp == 0xFE31u ||
+           rin_unicode_in_range(
+               cp, g_rin_unicode_line_break_ba_ranges,
+               g_rin_unicode_line_break_ba_range_count);
 }
 
 static int rin_unicode_line_break_is_break_before(uint32_t cp) {

@@ -61,6 +61,9 @@ int main(void) {
         {'a', (char)0xEF, (char)0xB8, (char)0xB1, 'b', '\0'},
         {'a', (char)0xF0, (char)0x90, (char)0xBA, (char)0xAD, 'b', '\0'}
     };
+    static const char official_ba[] = {'a', '|', 'b', '\0'};
+    static const char official_non_ascii_ba[] = {
+        'a', (char)0xE0, (char)0xA5, (char)0xA4, 'b', '\0'};
     static const char break_before_after[][6] = {
         {'a', (char)0xE2, (char)0x80, (char)0x94, 'b', '\0'}
     };
@@ -301,6 +304,12 @@ int main(void) {
                 break_after_offsets[index]) != RIN_UNICODE_LINE_BREAK_ALLOWED)
             return 27;
     }
+    if (rin_unicode_line_break_opportunity(official_ba, sizeof(official_ba) - 1u,
+                                           2u) != RIN_UNICODE_LINE_BREAK_ALLOWED ||
+        rin_unicode_line_break_opportunity(official_non_ascii_ba,
+                                           sizeof(official_non_ascii_ba) - 1u,
+                                           4u) != RIN_UNICODE_LINE_BREAK_ALLOWED)
+        return 32;
     for (size_t index = 0u; index < sizeof(break_before_after) /
                                     sizeof(break_before_after[0]); ++index) {
         if (rin_unicode_line_break_opportunity(break_before_after[index], 5u,
