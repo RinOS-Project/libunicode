@@ -58,7 +58,6 @@ int main(void) {
         {'a', (char)0xE1, (char)0x90, (char)0x80, 'b', '\0'},
         {'a', (char)0xE1, (char)0xA0, (char)0x86, 'b', '\0'},
         {'a', (char)0xE2, (char)0x80, (char)0x92, 'b', '\0'},
-        {'a', (char)0xE3, (char)0x80, (char)0x9C, 'b', '\0'},
         {'a', (char)0xEF, (char)0xB8, (char)0xB1, 'b', '\0'},
         {'a', (char)0xF0, (char)0x90, (char)0xBA, (char)0xAD, 'b', '\0'}
     };
@@ -76,7 +75,9 @@ int main(void) {
         {'a', '-', (char)0xE3, (char)0x82, (char)0x9B, 'b', '\0'},
         {'a', '-', (char)0xE3, (char)0x82, (char)0x9C, 'b', '\0'},
         {'a', '-', (char)0xE3, (char)0x82, (char)0x9D, 'b', '\0'},
-        {'a', '-', (char)0xE3, (char)0x82, (char)0x9E, 'b', '\0'}
+        {'a', '-', (char)0xE3, (char)0x82, (char)0x9E, 'b', '\0'},
+        {'a', '-', (char)0xE3, (char)0x80, (char)0x9C, 'b', '\0'},
+        {'a', '-', (char)0xE3, (char)0x82, (char)0xA0, 'b', '\0'}
     };
     static const char fullwidth_punctuation[][11] = {
         {(char)0xE6, (char)0x96, (char)0x87,
@@ -115,9 +116,9 @@ int main(void) {
          (char)0xE8, (char)0xAA, (char)0x9E, '\0'}
     };
     static const size_t break_after_lengths[] = {4u, 4u, 5u, 5u,
-                                                  5u, 5u, 5u, 6u};
+                                                  5u, 5u, 6u};
     static const size_t break_after_offsets[] = {3u, 3u, 4u, 4u,
-                                                  4u, 4u, 4u, 5u};
+                                                  4u, 4u, 5u};
     size_t words_len = sizeof(words) - 1u;
     size_t multiple_spaces_len = sizeof(multiple_spaces);
     size_t hard_len = sizeof(hard_break) - 1u;
