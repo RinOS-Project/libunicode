@@ -31,6 +31,7 @@ typedef struct RinUnicodeCaseFoldEntry {
 
 #include "generated_data.h"
 #include "extended_pictographic_data.h"
+#include "grapheme_break_data.h"
 
 #define RIN_UNICODE_DECOMP_SEGMENT 18u
 #define RIN_UNICODE_NORMALIZATION_SEGMENT 64u
@@ -244,9 +245,18 @@ static int rin_unicode_is_regional_indicator(uint32_t cp) {
 }
 
 static int rin_unicode_is_spacing_mark(uint32_t cp) {
+    if (rin_unicode_in_range(
+            cp, g_rin_unicode_grapheme_other_overrides,
+            sizeof(g_rin_unicode_grapheme_other_overrides) /
+                sizeof(g_rin_unicode_grapheme_other_overrides[0])) ||
+        rin_unicode_in_range(
+            cp, g_rin_unicode_grapheme_extend_overrides,
+            sizeof(g_rin_unicode_grapheme_extend_overrides) /
+                sizeof(g_rin_unicode_grapheme_extend_overrides[0])))
+        return 0;
     return rin_unicode_in_range(
-        cp, g_rin_unicode_spacing_mark_ranges,
-        g_rin_unicode_spacing_mark_range_count) ||
+               cp, g_rin_unicode_spacing_mark_ranges,
+               g_rin_unicode_spacing_mark_range_count) ||
         /* UAX #29 SpacingMark includes these Lo-category vowel signs. */
         cp == 0x0E33u || cp == 0x0EB3u;
 }
@@ -283,6 +293,16 @@ rin_unicode_grapheme_property_t rin_unicode_grapheme_property(uint32_t cp) {
         (cp >= 0xE0080u && cp <= 0xE00FFu) ||
         (cp >= 0xE01F0u && cp <= 0xE0FFFu))
         return RIN_UNICODE_GRAPHEME_CONTROL;
+    if (rin_unicode_in_range(
+            cp, g_rin_unicode_grapheme_extend_overrides,
+            sizeof(g_rin_unicode_grapheme_extend_overrides) /
+                sizeof(g_rin_unicode_grapheme_extend_overrides[0])))
+        return RIN_UNICODE_GRAPHEME_EXTEND;
+    if (rin_unicode_in_range(
+            cp, g_rin_unicode_grapheme_other_overrides,
+            sizeof(g_rin_unicode_grapheme_other_overrides) /
+                sizeof(g_rin_unicode_grapheme_other_overrides[0])))
+        return RIN_UNICODE_GRAPHEME_OTHER;
     if (rin_unicode_is_spacing_mark(cp)) return RIN_UNICODE_GRAPHEME_SPACING_MARK;
     if (rin_unicode_is_prepend(cp)) return RIN_UNICODE_GRAPHEME_PREPEND;
     if (rin_unicode_is_combining(cp) ||

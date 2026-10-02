@@ -14,6 +14,20 @@ int main(void)
            RIN_UNICODE_GRAPHEME_SPACING_MARK);
     assert(rin_unicode_grapheme_property(0x1E944u) ==
            RIN_UNICODE_GRAPHEME_EXTEND);
+    assert(rin_unicode_grapheme_property(0x09BEu) ==
+           RIN_UNICODE_GRAPHEME_EXTEND);
+    assert(rin_unicode_grapheme_property(0x302Eu) ==
+           RIN_UNICODE_GRAPHEME_EXTEND);
+    assert(rin_unicode_grapheme_property(0xFF9Eu) ==
+           RIN_UNICODE_GRAPHEME_EXTEND);
+    assert(rin_unicode_grapheme_property(0x1D165u) ==
+           RIN_UNICODE_GRAPHEME_EXTEND);
+    assert(rin_unicode_grapheme_property(0x102Bu) ==
+           RIN_UNICODE_GRAPHEME_OTHER);
+    assert(rin_unicode_grapheme_property(0x1062u) ==
+           RIN_UNICODE_GRAPHEME_OTHER);
+    assert(rin_unicode_grapheme_property(0xAA7Bu) ==
+           RIN_UNICODE_GRAPHEME_OTHER);
     assert(rin_unicode_grapheme_property(0x1193Fu) ==
            RIN_UNICODE_GRAPHEME_PREPEND);
     assert(rin_unicode_grapheme_property(0x0890u) ==
