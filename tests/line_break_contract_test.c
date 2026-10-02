@@ -72,6 +72,20 @@ int main(void) {
         {'a', (char)0xEF, (char)0xBD, (char)0xA5, 'b', '\0'},
         {'a', (char)0xEF, (char)0xBD, (char)0xA7, 'b', '\0'}
     };
+    static const char fullwidth_punctuation[][11] = {
+        {(char)0xE6, (char)0x96, (char)0x87,
+         (char)0xEF, (char)0xBC, (char)0x81,
+         (char)0xE8, (char)0xAA, (char)0x9E, '\0'},
+        {(char)0xE6, (char)0x96, (char)0x87,
+         (char)0xEF, (char)0xBC, (char)0x9A,
+         (char)0xE8, (char)0xAA, (char)0x9E, '\0'},
+        {(char)0xE6, (char)0x96, (char)0x87,
+         (char)0xEF, (char)0xBC, (char)0x9B,
+         (char)0xE8, (char)0xAA, (char)0x9E, '\0'},
+        {(char)0xE6, (char)0x96, (char)0x87,
+         (char)0xEF, (char)0xBC, (char)0x9F,
+         (char)0xE8, (char)0xAA, (char)0x9E, '\0'}
+    };
     static const size_t break_after_lengths[] = {4u, 4u, 5u, 5u,
                                                   5u, 5u, 5u, 6u};
     static const size_t break_after_offsets[] = {3u, 3u, 4u, 4u,
@@ -252,6 +266,16 @@ int main(void) {
         if (rin_unicode_line_break_opportunity(nonstarter[index], 5u, 1u) !=
             RIN_UNICODE_LINE_BREAK_PROHIBITED)
             return 30;
+    }
+    for (size_t index = 0u; index < sizeof(fullwidth_punctuation) /
+                                    sizeof(fullwidth_punctuation[0]); ++index) {
+        if (rin_unicode_line_break_opportunity(fullwidth_punctuation[index],
+                                               9u, 3u) !=
+                RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+            rin_unicode_line_break_opportunity(fullwidth_punctuation[index],
+                                               9u, 6u) !=
+                RIN_UNICODE_LINE_BREAK_ALLOWED)
+            return 33;
     }
     return 0;
 }
