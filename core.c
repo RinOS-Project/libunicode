@@ -30,6 +30,7 @@ typedef struct RinUnicodeCaseFoldEntry {
 } RinUnicodeCaseFoldEntry;
 
 #include "generated_data.h"
+#include "extended_pictographic_data.h"
 
 #define RIN_UNICODE_DECOMP_SEGMENT 18u
 #define RIN_UNICODE_NORMALIZATION_SEGMENT 64u
@@ -259,21 +260,9 @@ static int rin_unicode_is_prepend(uint32_t cp) {
 }
 
 int rin_unicode_is_extended_pictographic(uint32_t cp) {
-    /* Regional indicators are emoji characters, but they are not in the
-     * Unicode Extended_Pictographic property.  Keep them out of GB11's
-     * look-behind so RI + ZWJ + pictograph does not become one cluster. */
-    if (cp >= 0x1F1E6u && cp <= 0x1F1FFu) return 0;
-    return cp == 0x00A9u || cp == 0x00AEu || cp == 0x203Cu ||
-           cp == 0x2049u || cp == 0x2122u || cp == 0x2139u ||
-           cp == 0x24C2u || (cp >= 0x2B05u && cp <= 0x2B07u) ||
-           (cp >= 0x2B1Bu && cp <= 0x2B1Cu) || cp == 0x2B50u ||
-           cp == 0x2B55u || (cp >= 0x2934u && cp <= 0x2935u) ||
-           cp == 0x3030u || cp == 0x303Du || cp == 0x3297u ||
-           cp == 0x3299u ||
-           (cp >= 0x2194u && cp <= 0x21FFu) ||
-           (cp >= 0x2300u && cp <= 0x23FFu) ||
-           (cp >= 0x2600u && cp <= 0x27BFu) ||
-           (cp >= 0x1F000u && cp <= 0x1FAFFu);
+    return rin_unicode_in_range(
+        cp, g_rin_unicode_extended_pictographic_ranges,
+        g_rin_unicode_extended_pictographic_range_count);
 }
 
 rin_unicode_grapheme_property_t rin_unicode_grapheme_property(uint32_t cp) {

@@ -103,10 +103,11 @@ int rin_unicode_encode_utf16(uint16_t* dest, size_t n, uint32_t cp, size_t* out_
 int rin_unicode_is_combining(uint32_t cp);
 int rin_unicode_cell_width(uint32_t cp);
 
-/* Return the bounded UAX #29 Grapheme_Cluster_Break property used by the
- * boundary implementation.  The generated combining/spacing-mark tables are
- * authoritative for this snapshot; control, prepend, and emoji properties
- * remain the deliberately bounded product subset documented by this API. */
+/* Return the Unicode 13.0.0 UAX #29 Grapheme_Cluster_Break property subset
+ * used by the boundary implementation.  Combining/spacing-mark data is
+ * generated from the product snapshot; control and prepend derivations are
+ * kept in the implementation because they are not emitted by Python's
+ * unicodedata API. */
 typedef enum rin_unicode_grapheme_property {
     RIN_UNICODE_GRAPHEME_OTHER = 0,
     RIN_UNICODE_GRAPHEME_CR,
@@ -125,8 +126,9 @@ typedef enum rin_unicode_grapheme_property {
 } rin_unicode_grapheme_property_t;
 
 rin_unicode_grapheme_property_t rin_unicode_grapheme_property(uint32_t cp);
-/* Return whether cp is in the bounded Extended_Pictographic subset used for
- * the GB11 ZWJ rule.  Full Unicode property coverage remains a data task. */
+/* Return whether cp has the Unicode 13.0.0 Extended_Pictographic property
+ * used for the GB11 ZWJ rule.  Regional indicators intentionally return
+ * false: they are Emoji characters but are not Extended_Pictographic. */
 int rin_unicode_is_extended_pictographic(uint32_t cp);
 size_t rin_unicode_grapheme_next(const char* s, size_t n, size_t offset);
 size_t rin_unicode_grapheme_prev(const char* s, size_t n, size_t offset);

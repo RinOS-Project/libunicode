@@ -65,7 +65,16 @@ int main(void)
     assert(rin_unicode_grapheme_property('A') ==
            RIN_UNICODE_GRAPHEME_OTHER);
     assert(rin_unicode_is_extended_pictographic(0x00A9u));
+    assert(rin_unicode_is_extended_pictographic(0x2388u));
+    assert(rin_unicode_is_extended_pictographic(0x2605u));
+    assert(rin_unicode_is_extended_pictographic(0x2680u));
+    assert(rin_unicode_is_extended_pictographic(0x2690u));
+    assert(rin_unicode_is_extended_pictographic(0x1F0D0u));
+    assert(rin_unicode_is_extended_pictographic(0x1F1ADu));
+    assert(rin_unicode_is_extended_pictographic(0x1F6D0u));
     assert(rin_unicode_is_extended_pictographic(0x1FAE0u));
+    assert(rin_unicode_is_extended_pictographic(0x1FC00u));
+    assert(rin_unicode_is_extended_pictographic(0x1FFFDu));
     assert(rin_unicode_is_extended_pictographic(0x24C2u));
     assert(rin_unicode_is_extended_pictographic(0x2B50u));
     assert(rin_unicode_is_extended_pictographic(0x2934u));
@@ -74,6 +83,8 @@ int main(void)
     assert(rin_unicode_is_extended_pictographic(0x3297u));
     assert(rin_unicode_is_extended_pictographic(0x3299u));
     assert(!rin_unicode_is_extended_pictographic(0x1F1FAu));
+    assert(!rin_unicode_is_extended_pictographic(0x2387u));
+    assert(!rin_unicode_is_extended_pictographic(0x1FFFEu));
     {
         static const char regional_zwj_pictograph[] =
             "\xF0\x9F\x87\xBA\xE2\x80\x8D\xF0\x9F\x98\x80";
