@@ -32,6 +32,8 @@ int main(void) {
         {'a', (char)0xE2, (char)0x80, (char)0xAF, 'b'};
     static const char non_break_hyphen[] =
         {'a', (char)0xE2, (char)0x80, (char)0x91, 'b'};
+    static const char zwj_after_break[] =
+        {'a', '-', (char)0xE2, (char)0x80, (char)0x8D, 'b'};
     static const char word_joiner[] =
         {'a', (char)0xE2, (char)0x81, (char)0xA0, 'b'};
     static const char bom_joiner[] =
@@ -188,6 +190,10 @@ int main(void) {
                                            non_break_hyphen_len, 4u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 21;
+    if (rin_unicode_line_break_opportunity(zwj_after_break,
+                                           sizeof(zwj_after_break), 2u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 31;
     if (rin_unicode_line_break_opportunity(word_joiner, word_joiner_len, 1u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED ||
         rin_unicode_line_break_opportunity(word_joiner, word_joiner_len, 4u) !=

@@ -447,6 +447,7 @@ static int rin_unicode_line_break_is_word_joiner(uint32_t cp) {
 
 static int rin_unicode_line_break_is_extend(uint32_t cp) {
     return rin_unicode_is_combining(cp) ||
+           cp == 0x200Du ||
            (cp >= 0xFE00u && cp <= 0xFE0Fu) ||
            (cp >= 0xE0100u && cp <= 0xE01EFu) ||
            (cp >= 0xE0020u && cp <= 0xE007Fu);
