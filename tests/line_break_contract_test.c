@@ -77,7 +77,13 @@ int main(void) {
         {'a', '-', (char)0xE3, (char)0x82, (char)0x9D, 'b', '\0'},
         {'a', '-', (char)0xE3, (char)0x82, (char)0x9E, 'b', '\0'},
         {'a', '-', (char)0xE3, (char)0x80, (char)0x9C, 'b', '\0'},
-        {'a', '-', (char)0xE3, (char)0x82, (char)0xA0, 'b', '\0'}
+        {'a', '-', (char)0xE3, (char)0x82, (char)0xA0, 'b', '\0'},
+        {'a', '-', (char)0xEF, (char)0xB8, (char)0x93, 'b', '\0'},
+        {'a', '-', (char)0xEF, (char)0xB8, (char)0x94, 'b', '\0'},
+        {'a', '-', (char)0xEF, (char)0xB9, (char)0x94, 'b', '\0'},
+        {'a', '-', (char)0xEF, (char)0xB9, (char)0x95, 'b', '\0'},
+        {'a', '-', (char)0xEF, (char)0xBE, (char)0x9E, 'b', '\0'},
+        {'a', '-', (char)0xEF, (char)0xBE, (char)0x9F, 'b', '\0'}
     };
     static const char fullwidth_punctuation[][11] = {
         {(char)0xE6, (char)0x96, (char)0x87,
