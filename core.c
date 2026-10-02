@@ -485,6 +485,19 @@ static int rin_unicode_line_break_is_nonstarter(uint32_t cp) {
            cp == 0x30FEu;
 }
 
+static int rin_unicode_line_break_is_break_after(uint32_t cp) {
+    /* Bounded UAX #14 BA coverage.  These hyphen-like characters permit a
+     * break after themselves; the surrounding public line-break contract
+     * still keeps grapheme clusters and no-break controls intact. */
+    return cp == 0x002Du || cp == 0x058Au || cp == 0x05BEu ||
+           cp == 0x1400u || cp == 0x1806u || cp == 0x2010u ||
+           cp == 0x2012u || cp == 0x2013u || cp == 0x2E17u ||
+           cp == 0x2E1Au || (cp >= 0x2E3Au && cp <= 0x2E3Bu) ||
+           cp == 0x2E40u || cp == 0x301Cu || cp == 0x30A0u ||
+           cp == 0xFE31u || cp == 0xFE32u || cp == 0xFE58u ||
+           cp == 0xFE63u || cp == 0xFF0Du || cp == 0x10EADu;
+}
+
 static int rin_unicode_line_break_is_boundary(const char* s, size_t n,
                                                size_t offset,
                                                uint32_t* first,
@@ -549,14 +562,12 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
         rin_unicode_line_break_is_extend(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (first == 0x200Bu || first == 0x00ADu ||
-        rin_unicode_line_break_is_space(first))
+        rin_unicode_line_break_is_space(first) ||
+        rin_unicode_line_break_is_break_after(first))
         return RIN_UNICODE_LINE_BREAK_ALLOWED;
     if (rin_unicode_line_break_is_open(first) ||
         rin_unicode_line_break_is_close(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
-    if (first == 0x002Du || first == 0x2010u || first == 0x2013u ||
-        first == 0x30A0u || first == 0xFF0Du)
-        return RIN_UNICODE_LINE_BREAK_ALLOWED;
     if (rin_unicode_line_break_is_ideographic(previous) &&
         rin_unicode_line_break_is_ideographic(next))
         return RIN_UNICODE_LINE_BREAK_ALLOWED;
