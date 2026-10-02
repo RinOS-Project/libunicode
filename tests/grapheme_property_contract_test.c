@@ -16,6 +16,10 @@ int main(void)
            RIN_UNICODE_GRAPHEME_EXTEND);
     assert(rin_unicode_grapheme_property(0x1193Fu) ==
            RIN_UNICODE_GRAPHEME_PREPEND);
+    assert(rin_unicode_grapheme_property(0x0890u) ==
+           RIN_UNICODE_GRAPHEME_OTHER);
+    assert(rin_unicode_grapheme_property(0x0891u) ==
+           RIN_UNICODE_GRAPHEME_OTHER);
     assert(rin_unicode_grapheme_property(0x061Cu) ==
            RIN_UNICODE_GRAPHEME_CONTROL);
     assert(rin_unicode_grapheme_property(0xFFF0u) ==

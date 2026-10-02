@@ -252,8 +252,7 @@ static int rin_unicode_is_spacing_mark(uint32_t cp) {
 
 static int rin_unicode_is_prepend(uint32_t cp) {
     return (cp >= 0x0600u && cp <= 0x0605u) || cp == 0x06DDu ||
-           cp == 0x070Fu || (cp >= 0x0890u && cp <= 0x0891u) ||
-           cp == 0x08E2u || cp == 0x0D4Eu || cp == 0x110BDu ||
+           cp == 0x070Fu || cp == 0x08E2u || cp == 0x0D4Eu || cp == 0x110BDu ||
            cp == 0x110CDu || (cp >= 0x111C2u && cp <= 0x111C3u) ||
            cp == 0x1193Fu || cp == 0x11941u || cp == 0x11A3Au ||
            (cp >= 0x11A84u && cp <= 0x11A89u) || cp == 0x11D46u;
