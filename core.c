@@ -477,7 +477,8 @@ static int rin_unicode_line_break_is_open(uint32_t cp) {
            cp == 0x3008u || cp == 0x300Au || cp == 0x300Cu ||
            cp == 0x300Eu || cp == 0x3010u || cp == 0x3014u ||
            cp == 0x3016u || cp == 0x3018u || cp == 0x301Au ||
-           cp == 0xFF08u || cp == 0xFF3Bu || cp == 0xFF5Bu;
+           cp == 0xFF08u || cp == 0xFF3Bu || cp == 0xFF5Bu ||
+           cp == 0xFF5Fu;
 }
 
 static int rin_unicode_line_break_is_close(uint32_t cp) {
@@ -492,7 +493,7 @@ static int rin_unicode_line_break_is_close(uint32_t cp) {
            cp == 0x3019u || cp == 0x301Bu || cp == 0xFF09u ||
            cp == 0xFF01u || cp == 0xFF0Cu || cp == 0xFF0Eu ||
            cp == 0xFF1Au || cp == 0xFF1Bu || cp == 0xFF1Fu ||
-           cp == 0xFF3Du || cp == 0xFF5Du;
+           cp == 0xFF3Du || cp == 0xFF5Du || cp == 0xFF60u;
 }
 
 static int rin_unicode_line_break_is_nonstarter(uint32_t cp) {

@@ -86,6 +86,14 @@ int main(void) {
          (char)0xEF, (char)0xBC, (char)0x9F,
          (char)0xE8, (char)0xAA, (char)0x9E, '\0'}
     };
+    static const char fullwidth_white_parentheses[][11] = {
+        {(char)0xE6, (char)0x96, (char)0x87,
+         (char)0xEF, (char)0xBD, (char)0x9F,
+         (char)0xE8, (char)0xAA, (char)0x9E, '\0'},
+        {(char)0xE6, (char)0x96, (char)0x87,
+         (char)0xEF, (char)0xBD, (char)0xA0,
+         (char)0xE8, (char)0xAA, (char)0x9E, '\0'}
+    };
     static const size_t break_after_lengths[] = {4u, 4u, 5u, 5u,
                                                   5u, 5u, 5u, 6u};
     static const size_t break_after_offsets[] = {3u, 3u, 4u, 4u,
@@ -277,5 +285,18 @@ int main(void) {
                 RIN_UNICODE_LINE_BREAK_ALLOWED)
             return 33;
     }
+    if (rin_unicode_line_break_opportunity(fullwidth_white_parentheses[0],
+                                           9u, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(fullwidth_white_parentheses[0],
+                                           9u, 6u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(fullwidth_white_parentheses[1],
+                                           9u, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(fullwidth_white_parentheses[1],
+                                           9u, 6u) !=
+            RIN_UNICODE_LINE_BREAK_ALLOWED)
+        return 34;
     return 0;
 }
