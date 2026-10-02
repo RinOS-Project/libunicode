@@ -67,11 +67,16 @@ int main(void) {
         {'a', (char)0xE2, (char)0x80, (char)0x95, 'b', '\0'}
     };
     static const char nonstarter[][8] = {
-        {'a', (char)0xE3, (char)0x80, (char)0xBB, 'b', '\0'},
-        {'a', (char)0xE3, (char)0x87, (char)0xB0, 'b', '\0'},
-        {'a', (char)0xEF, (char)0xBD, (char)0xA5, 'b', '\0'},
-        {'a', (char)0xEF, (char)0xBD, (char)0xA7, 'b', '\0'},
-        {'a', (char)0xE3, (char)0x80, (char)0x85, 'b', '\0'}
+        {'a', '-', (char)0xE3, (char)0x80, (char)0xBB, 'b', '\0'},
+        {'a', '-', (char)0xE3, (char)0x87, (char)0xB0, 'b', '\0'},
+        {'a', '-', (char)0xEF, (char)0xBD, (char)0xA5, 'b', '\0'},
+        {'a', '-', (char)0xEF, (char)0xBD, (char)0xA7, 'b', '\0'},
+        {'a', '-', (char)0xE3, (char)0x80, (char)0x85, 'b', '\0'},
+        {'a', '-', (char)0xE3, (char)0x80, (char)0xBC, 'b', '\0'},
+        {'a', '-', (char)0xE3, (char)0x82, (char)0x9B, 'b', '\0'},
+        {'a', '-', (char)0xE3, (char)0x82, (char)0x9C, 'b', '\0'},
+        {'a', '-', (char)0xE3, (char)0x83, (char)0x9D, 'b', '\0'},
+        {'a', '-', (char)0xE3, (char)0x83, (char)0x9E, 'b', '\0'}
     };
     static const char fullwidth_punctuation[][11] = {
         {(char)0xE6, (char)0x96, (char)0x87,
@@ -286,7 +291,7 @@ int main(void) {
     }
     for (size_t index = 0u; index < sizeof(nonstarter) /
                                     sizeof(nonstarter[0]); ++index) {
-        if (rin_unicode_line_break_opportunity(nonstarter[index], 5u, 1u) !=
+        if (rin_unicode_line_break_opportunity(nonstarter[index], 6u, 2u) !=
             RIN_UNICODE_LINE_BREAK_PROHIBITED)
             return 30;
     }
