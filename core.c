@@ -258,6 +258,10 @@ static int rin_unicode_is_prepend(uint32_t cp) {
 }
 
 int rin_unicode_is_extended_pictographic(uint32_t cp) {
+    /* Regional indicators are emoji characters, but they are not in the
+     * Unicode Extended_Pictographic property.  Keep them out of GB11's
+     * look-behind so RI + ZWJ + pictograph does not become one cluster. */
+    if (cp >= 0x1F1E6u && cp <= 0x1F1FFu) return 0;
     return cp == 0x00A9u || cp == 0x00AEu || cp == 0x203Cu ||
            cp == 0x2049u || cp == 0x2122u || cp == 0x2139u ||
            cp == 0x24C2u || (cp >= 0x2B05u && cp <= 0x2B07u) ||

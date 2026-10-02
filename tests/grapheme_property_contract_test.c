@@ -37,6 +37,14 @@ int main(void)
     assert(rin_unicode_is_extended_pictographic(0x303Du));
     assert(rin_unicode_is_extended_pictographic(0x3297u));
     assert(rin_unicode_is_extended_pictographic(0x3299u));
+    assert(!rin_unicode_is_extended_pictographic(0x1F1FAu));
+    {
+        static const char regional_zwj_pictograph[] =
+            "\xF0\x9F\x87\xBA\xE2\x80\x8D\xF0\x9F\x98\x80";
+        assert(rin_unicode_grapheme_next(
+                   regional_zwj_pictograph,
+                   sizeof(regional_zwj_pictograph) - 1u, 0u) == 7u);
+    }
     assert(!rin_unicode_is_extended_pictographic('A'));
     return 0;
 }
