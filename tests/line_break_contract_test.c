@@ -54,6 +54,10 @@ int main(void) {
         {'a', (char)0xEF, (char)0xB8, (char)0xB1, 'b', '\0'},
         {'a', (char)0xF0, (char)0x90, (char)0xBA, (char)0xAD, 'b', '\0'}
     };
+    static const char break_before_after[][6] = {
+        {'a', (char)0xE2, (char)0x80, (char)0x94, 'b', '\0'},
+        {'a', (char)0xE2, (char)0x80, (char)0x95, 'b', '\0'}
+    };
     static const size_t break_after_lengths[] = {4u, 4u, 5u, 5u,
                                                   5u, 5u, 5u, 6u};
     static const size_t break_after_offsets[] = {3u, 3u, 4u, 4u,
@@ -202,6 +206,16 @@ int main(void) {
                 break_after[index], break_after_lengths[index],
                 break_after_offsets[index]) != RIN_UNICODE_LINE_BREAK_ALLOWED)
             return 27;
+    }
+    for (size_t index = 0u; index < sizeof(break_before_after) /
+                                    sizeof(break_before_after[0]); ++index) {
+        if (rin_unicode_line_break_opportunity(break_before_after[index], 5u,
+                                               1u) !=
+                RIN_UNICODE_LINE_BREAK_ALLOWED ||
+            rin_unicode_line_break_opportunity(break_before_after[index], 5u,
+                                               4u) !=
+                RIN_UNICODE_LINE_BREAK_ALLOWED)
+            return 29;
     }
     return 0;
 }
