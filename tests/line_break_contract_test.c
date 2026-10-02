@@ -36,6 +36,8 @@ int main(void) {
         {'a', (char)0xE2, (char)0x81, (char)0xA0, 'b'};
     static const char bom_joiner[] =
         {'a', (char)0xEF, (char)0xBB, (char)0xBF, 'b'};
+    static const char malformed[] =
+        {'a', (char)0xC2, ' ', 'b'};
     static const char word_joiners[][6] = {
         {'a', (char)0xE2, (char)0x81, (char)0xA1, 'b', '\0'},
         {'a', (char)0xE2, (char)0x81, (char)0xA2, 'b', '\0'},
@@ -71,6 +73,7 @@ int main(void) {
     size_t non_break_hyphen_len = sizeof(non_break_hyphen);
     size_t word_joiner_len = sizeof(word_joiner);
     size_t bom_joiner_len = sizeof(bom_joiner);
+    size_t malformed_len = sizeof(malformed);
 
     if (rin_unicode_line_break_opportunity(words, words_len, 5u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
@@ -139,6 +142,11 @@ int main(void) {
     if (rin_unicode_line_break_opportunity(NULL, 0u, 0u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 12;
+    if (rin_unicode_line_break_opportunity(malformed, malformed_len, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_next(malformed, malformed_len, 0u) !=
+            malformed_len)
+        return 28;
     if (rin_unicode_line_break_opportunity(words, words_len, 1u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 13;

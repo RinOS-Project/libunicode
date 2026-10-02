@@ -420,6 +420,21 @@ static int rin_unicode_valid_wstring(const uint32_t* s,
     return 1;
 }
 
+static int rin_unicode_line_break_valid_utf8(const char* s, size_t n) {
+    size_t offset = 0u;
+    if (!s) return 0;
+    while (offset < n) {
+        uint32_t cp = 0u;
+        size_t consumed = 0u;
+        if (rin_unicode_decode_utf8(s + offset, n - offset, &cp,
+                                    &consumed) != RIN_UNICODE_OK ||
+            consumed == 0u)
+            return 0;
+        offset += consumed;
+    }
+    return 1;
+}
+
 static int rin_unicode_line_break_is_non_break_space(uint32_t cp) {
     return cp == 0x00A0u || cp == 0x2007u || cp == 0x2011u ||
            cp == 0x202Fu;
@@ -531,6 +546,8 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
     uint32_t previous = 0u;
     uint32_t next = 0u;
     size_t next_len = 0u;
+    if (!rin_unicode_line_break_valid_utf8(s, n))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (!rin_unicode_line_break_is_boundary(s, n, offset, &first, &previous))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (offset >= n) return RIN_UNICODE_LINE_BREAK_PROHIBITED;
@@ -579,7 +596,7 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
 
 size_t rin_unicode_line_break_next(const char* s, size_t n, size_t offset) {
     size_t cursor;
-    if (!s || offset >= n) return n;
+    if (!rin_unicode_line_break_valid_utf8(s, n) || offset >= n) return n;
     if (offset != 0u &&
         !rin_unicode_line_break_is_boundary(s, n, offset, NULL, NULL))
         return n;

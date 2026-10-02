@@ -134,9 +134,11 @@ size_t rin_unicode_grapheme_prev(const char* s, size_t n, size_t offset);
 /* Conservative, allocation-free line-break boundaries for UTF-8 text.  The
  * opportunity is queried at a grapheme boundary and describes the break
  * before the scalar at offset.  It covers hard breaks, whitespace, soft
- * hyphens, common punctuation, and ideographic text.  It is deliberately not
- * a complete UAX #14 property database; callers needing the full rule set
- * must keep that policy above this API. */
+ * hyphens, common punctuation, and ideographic text.  Malformed UTF-8 is
+ * rejected for the whole explicit-length input rather than treated as a
+ * replacement scalar.  It is deliberately not a complete UAX #14 property
+ * database; callers needing the full rule set must keep that policy above
+ * this API. */
 int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset);
 /* Return the first allowed or mandatory break after offset, or n when none is
  * available.  offset is normally a grapheme boundary. */
