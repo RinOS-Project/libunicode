@@ -34,6 +34,12 @@ int main(void) {
         {'a', (char)0xE2, (char)0x80, (char)0x91, 'b'};
     static const char zwj_after_break[] =
         {'a', '-', (char)0xE2, (char)0x80, (char)0x8D, 'b'};
+    static const char zwnj_after_break[] =
+        {'a', '-', (char)0xE2, (char)0x80, (char)0x8C, 'b'};
+    static const char arabic_mark_after_break[] =
+        {'a', '-', (char)0xD8, (char)0x9C, 'b'};
+    static const char mongolian_mark_after_break[] =
+        {'a', '-', (char)0xE1, (char)0xA0, (char)0x8E, 'b'};
     static const char word_joiner[] =
         {'a', (char)0xE2, (char)0x81, (char)0xA0, 'b'};
     static const char bom_joiner[] =
@@ -194,6 +200,18 @@ int main(void) {
                                            sizeof(zwj_after_break), 2u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 31;
+    if (rin_unicode_line_break_opportunity(zwnj_after_break,
+                                           sizeof(zwnj_after_break), 2u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(arabic_mark_after_break,
+                                           sizeof(arabic_mark_after_break),
+                                           2u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(mongolian_mark_after_break,
+                                           sizeof(mongolian_mark_after_break),
+                                           2u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 32;
     if (rin_unicode_line_break_opportunity(word_joiner, word_joiner_len, 1u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED ||
         rin_unicode_line_break_opportunity(word_joiner, word_joiner_len, 4u) !=

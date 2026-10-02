@@ -446,7 +446,11 @@ static int rin_unicode_line_break_is_word_joiner(uint32_t cp) {
 }
 
 static int rin_unicode_line_break_is_extend(uint32_t cp) {
+    /* The bounded combining table does not include the format controls that
+     * UAX #14 classifies as CM/ZWJ.  They must not inherit a break after a
+     * preceding break-after character. */
     return rin_unicode_is_combining(cp) ||
+           cp == 0x061Cu || cp == 0x180Eu || cp == 0x200Cu ||
            cp == 0x200Du ||
            (cp >= 0xFE00u && cp <= 0xFE0Fu) ||
            (cp >= 0xE0100u && cp <= 0xE01EFu) ||
