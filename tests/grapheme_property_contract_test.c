@@ -8,6 +8,10 @@ int main(void)
 {
     assert(rin_unicode_grapheme_property(0x1A55u) ==
            RIN_UNICODE_GRAPHEME_SPACING_MARK);
+    assert(rin_unicode_grapheme_property(0x0E33u) ==
+           RIN_UNICODE_GRAPHEME_SPACING_MARK);
+    assert(rin_unicode_grapheme_property(0x0EB3u) ==
+           RIN_UNICODE_GRAPHEME_SPACING_MARK);
     assert(rin_unicode_grapheme_property(0x1E944u) ==
            RIN_UNICODE_GRAPHEME_EXTEND);
     assert(rin_unicode_grapheme_property(0x1193Fu) ==

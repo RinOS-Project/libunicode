@@ -245,7 +245,9 @@ static int rin_unicode_is_regional_indicator(uint32_t cp) {
 static int rin_unicode_is_spacing_mark(uint32_t cp) {
     return rin_unicode_in_range(
         cp, g_rin_unicode_spacing_mark_ranges,
-        g_rin_unicode_spacing_mark_range_count);
+        g_rin_unicode_spacing_mark_range_count) ||
+        /* UAX #29 SpacingMark includes these Lo-category vowel signs. */
+        cp == 0x0E33u || cp == 0x0EB3u;
 }
 
 static int rin_unicode_is_prepend(uint32_t cp) {
