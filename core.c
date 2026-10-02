@@ -720,7 +720,6 @@ int rin_unicode_validate_utf8(const char* s, size_t n, size_t* valid_prefix) {
         uint32_t cp = 0u;
         size_t consumed = 0u;
         int status;
-        if (s[offset] == '\0') break;
         status = rin_unicode_decode_utf8(s + offset, n - offset, &cp, &consumed);
         if (status != RIN_UNICODE_OK) {
             if (valid_prefix) *valid_prefix = offset;
