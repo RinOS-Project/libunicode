@@ -478,12 +478,13 @@ static int rin_unicode_line_break_is_open(uint32_t cp) {
            cp == 0x300Eu || cp == 0x3010u || cp == 0x3014u ||
            cp == 0x3016u || cp == 0x3018u || cp == 0x301Au ||
            cp == 0xFF08u || cp == 0xFF3Bu || cp == 0xFF5Bu ||
-           cp == 0xFF5Fu;
+           cp == 0xFF5Fu || cp == 0x2329u;
 }
 
 static int rin_unicode_line_break_is_close(uint32_t cp) {
     return cp == 0x0029u || cp == 0x005Du || cp == 0x007Du ||
-           cp == 0x00BBu || cp == 0x2019u || cp == 0x201Du ||
+           cp == 0x00BBu || cp == 0x2019u || cp == 0x201Au ||
+           cp == 0x201Du || cp == 0x201Eu ||
            cp == 0x203Au ||
            cp == 0x002Cu || cp == 0x002Eu || cp == 0x003Au ||
            cp == 0x003Bu || cp == 0x0021u || cp == 0x003Fu ||
@@ -493,7 +494,8 @@ static int rin_unicode_line_break_is_close(uint32_t cp) {
            cp == 0x3019u || cp == 0x301Bu || cp == 0xFF09u ||
            cp == 0xFF01u || cp == 0xFF0Cu || cp == 0xFF0Eu ||
            cp == 0xFF1Au || cp == 0xFF1Bu || cp == 0xFF1Fu ||
-           cp == 0xFF3Du || cp == 0xFF5Du || cp == 0xFF60u;
+           cp == 0xFF3Du || cp == 0xFF5Du || cp == 0xFF60u ||
+           cp == 0x232Au;
 }
 
 static int rin_unicode_line_break_is_nonstarter(uint32_t cp) {
