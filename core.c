@@ -527,7 +527,7 @@ static int rin_unicode_line_break_is_break_after(uint32_t cp) {
     return cp == 0x002Du || cp == 0x058Au || cp == 0x05BEu ||
            cp == 0x1400u || cp == 0x1806u || cp == 0x2010u ||
            cp == 0x2012u || cp == 0x2013u || cp == 0x2014u ||
-           cp == 0x2015u || cp == 0x2E17u ||
+           cp == 0x2E17u ||
            cp == 0x2E1Au || (cp >= 0x2E3Au && cp <= 0x2E3Bu) ||
            cp == 0x2E40u ||
            cp == 0xFE31u || cp == 0xFE32u || cp == 0xFE58u ||
@@ -535,10 +535,10 @@ static int rin_unicode_line_break_is_break_after(uint32_t cp) {
 }
 
 static int rin_unicode_line_break_is_break_before(uint32_t cp) {
-    /* Bounded UAX #14 B2 coverage.  EM DASH and HORIZONTAL BAR are allowed
-     * on either side, but the open-punctuation rule below still wins for a
-     * boundary immediately after an opening delimiter. */
-    return cp == 0x2014u || cp == 0x2015u;
+    /* Bounded UAX #14 B2 coverage.  EM DASH is allowed on either side, but
+     * the open-punctuation rule below still wins for a boundary immediately
+     * after an opening delimiter.  U+2015 HORIZONTAL BAR is AI, not B2. */
+    return cp == 0x2014u;
 }
 
 static int rin_unicode_line_break_is_boundary(const char* s, size_t n,
