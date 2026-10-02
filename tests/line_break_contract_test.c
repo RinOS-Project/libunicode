@@ -120,6 +120,15 @@ int main(void) {
          (char)0xE8, (char)0xAA, (char)0x9E, '\0'},
         {(char)0xE6, (char)0x96, (char)0x87,
          (char)0xE2, (char)0x8C, (char)0xAA,
+         (char)0xE8, (char)0xAA, (char)0x9E, '\0'},
+        {(char)0xE6, (char)0x96, (char)0x87,
+         (char)0xE3, (char)0x80, (char)0x9D,
+         (char)0xE8, (char)0xAA, (char)0x9E, '\0'},
+        {(char)0xE6, (char)0x96, (char)0x87,
+         (char)0xE3, (char)0x80, (char)0x9E,
+         (char)0xE8, (char)0xAA, (char)0x9E, '\0'},
+        {(char)0xE6, (char)0x96, (char)0x87,
+         (char)0xE3, (char)0x80, (char)0x9F,
          (char)0xE8, (char)0xAA, (char)0x9E, '\0'}
     };
     static const size_t break_after_lengths[] = {4u, 4u, 5u, 5u,
@@ -355,6 +364,24 @@ int main(void) {
                                            9u, 3u) !=
             RIN_UNICODE_LINE_BREAK_PROHIBITED ||
         rin_unicode_line_break_opportunity(additional_quote_and_angle[3],
+                                           9u, 6u) !=
+            RIN_UNICODE_LINE_BREAK_ALLOWED ||
+        rin_unicode_line_break_opportunity(additional_quote_and_angle[4],
+                                           9u, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(additional_quote_and_angle[4],
+                                           9u, 6u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(additional_quote_and_angle[5],
+                                           9u, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(additional_quote_and_angle[5],
+                                           9u, 6u) !=
+            RIN_UNICODE_LINE_BREAK_ALLOWED ||
+        rin_unicode_line_break_opportunity(additional_quote_and_angle[6],
+                                           9u, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(additional_quote_and_angle[6],
                                            9u, 6u) !=
             RIN_UNICODE_LINE_BREAK_ALLOWED)
         return 35;
