@@ -58,6 +58,12 @@ int main(void) {
         {'a', (char)0xE2, (char)0x80, (char)0x94, 'b', '\0'},
         {'a', (char)0xE2, (char)0x80, (char)0x95, 'b', '\0'}
     };
+    static const char nonstarter[][8] = {
+        {'a', (char)0xE3, (char)0x80, (char)0xBB, 'b', '\0'},
+        {'a', (char)0xE3, (char)0x87, (char)0xB0, 'b', '\0'},
+        {'a', (char)0xEF, (char)0xBD, (char)0xA5, 'b', '\0'},
+        {'a', (char)0xEF, (char)0xBD, (char)0xA7, 'b', '\0'}
+    };
     static const size_t break_after_lengths[] = {4u, 4u, 5u, 5u,
                                                   5u, 5u, 5u, 6u};
     static const size_t break_after_offsets[] = {3u, 3u, 4u, 4u,
@@ -216,6 +222,12 @@ int main(void) {
                                                4u) !=
                 RIN_UNICODE_LINE_BREAK_ALLOWED)
             return 29;
+    }
+    for (size_t index = 0u; index < sizeof(nonstarter) /
+                                    sizeof(nonstarter[0]); ++index) {
+        if (rin_unicode_line_break_opportunity(nonstarter[index], 5u, 1u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED)
+            return 30;
     }
     return 0;
 }
