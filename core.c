@@ -286,7 +286,14 @@ rin_unicode_grapheme_property_t rin_unicode_grapheme_property(uint32_t cp) {
         cp == 0x00ADu || cp == 0x061Cu || cp == 0x180Eu ||
         (cp >= 0x200Bu && cp <= 0x200Fu) ||
         (cp >= 0x2028u && cp <= 0x202Eu) ||
-        (cp >= 0x2060u && cp <= 0x206Fu) || cp == 0xFEFFu)
+        (cp >= 0x2060u && cp <= 0x206Fu) || cp == 0xFEFFu ||
+        (cp >= 0xFFF0u && cp <= 0xFFFBu) ||
+        (cp >= 0x13430u && cp <= 0x13438u) ||
+        (cp >= 0x1BCA0u && cp <= 0x1BCA3u) ||
+        (cp >= 0x1D173u && cp <= 0x1D17Au) ||
+        (cp >= 0xE0000u && cp <= 0xE001Fu) ||
+        (cp >= 0xE0080u && cp <= 0xE00FFu) ||
+        (cp >= 0xE01F0u && cp <= 0xE0FFFu))
         return RIN_UNICODE_GRAPHEME_CONTROL;
     if (rin_unicode_is_spacing_mark(cp)) return RIN_UNICODE_GRAPHEME_SPACING_MARK;
     if (rin_unicode_is_prepend(cp)) return RIN_UNICODE_GRAPHEME_PREPEND;

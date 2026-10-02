@@ -18,6 +18,34 @@ int main(void)
            RIN_UNICODE_GRAPHEME_PREPEND);
     assert(rin_unicode_grapheme_property(0x061Cu) ==
            RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0xFFF0u) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0xFFFBu) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0x13430u) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0x13438u) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0x1BCA0u) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0x1BCA3u) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0x1D173u) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0x1D17Au) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0xE0000u) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0xE001Fu) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0xE0080u) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0xE00FFu) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0xE01F0u) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
+    assert(rin_unicode_grapheme_property(0xE0FFFu) ==
+           RIN_UNICODE_GRAPHEME_CONTROL);
     assert(rin_unicode_grapheme_property(0x1F1FAu) ==
            RIN_UNICODE_GRAPHEME_RI);
     assert(rin_unicode_grapheme_property(0x1100u) ==
