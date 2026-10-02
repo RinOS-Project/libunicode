@@ -513,6 +513,8 @@ static int rin_unicode_line_break_is_nonstarter(uint32_t cp) {
            cp == 0x30E7u || cp == 0x30EEu || cp == 0x30F5u ||
            cp == 0x30F6u || cp == 0x30FCu || cp == 0x30FDu ||
            cp == 0x30FEu || cp == 0x30FBu || cp == 0x3005u ||
+           cp == 0x203Cu || cp == 0x203Du ||
+           (cp >= 0x2047u && cp <= 0x2049u) ||
            cp == 0x301Cu || cp == 0x30A0u ||
            cp == 0x303Bu || cp == 0x303Cu || cp == 0x309Bu ||
            cp == 0x309Cu || cp == 0x309Du || cp == 0x309Eu ||
