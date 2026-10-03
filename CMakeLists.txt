@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.16)
-project(RinUnicode VERSION 1.0.0 LANGUAGES C)
+project(RinUnicode VERSION 1.0.0 LANGUAGES C CXX)
 
 option(RIN_UNICODE_BUILD_TESTS
        "Build RinUnicode public core contract tests"
        OFF)
 
-add_library(RinUnicodeCore STATIC core.c)
+add_library(RinUnicodeCore STATIC core.c idna.cpp)
 add_library(RinUnicode::Core ALIAS RinUnicodeCore)
 target_compile_features(RinUnicodeCore PUBLIC c_std_11)
+target_compile_features(RinUnicodeCore PUBLIC cxx_std_17)
 target_include_directories(RinUnicodeCore PUBLIC
                            ${CMAKE_CURRENT_SOURCE_DIR})
 if(NOT MSVC)

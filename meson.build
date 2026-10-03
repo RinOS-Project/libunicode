@@ -1,8 +1,8 @@
-project('RinUnicode', 'c', version: '1.0.0',
-        default_options: ['c_std=c11', 'warning_level=3'])
+project('RinUnicode', 'c', 'cpp', version: '1.0.0',
+        default_options: ['c_std=c11', 'cpp_std=c++17', 'warning_level=3'])
 
 unicode_inc = include_directories('.')
-unicode_core = library('rinunicode-core', 'core.c',
+unicode_core = library('rinunicode-core', ['core.c', 'idna.cpp'],
                        include_directories: unicode_inc,
                        install: false)
 unicode_core_dep = declare_dependency(link_with: unicode_core,
