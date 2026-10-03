@@ -8,9 +8,10 @@ the RinOS libc/runtime owner graph.
 
 The line-break adapter includes a bounded UAX #14 subset: hard breaks,
 whitespace, BA/B2, the dictionary BB stress-mark cases U+00B4/U+1FFD/U+02C8/
-U+02CC/U+02DF, Regional Indicator flag runs, solidus URL/path breaks, common
-punctuation, and ideographic text.  It is not a full LineBreak property
-database or locale-tailored line-breaking implementation.
+U+02CC/U+02DF, the LB8a zero-width-joiner no-break boundary, Regional Indicator
+flag runs, solidus URL/path breaks, common punctuation, and ideographic text.
+It is not a full LineBreak property database or locale-tailored line-breaking
+implementation.
 
 The CMake contract tests are enabled with
 `-DRIN_UNICODE_BUILD_TESTS=ON`; Meson exposes the same four

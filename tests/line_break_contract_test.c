@@ -34,6 +34,9 @@ int main(void) {
         {'a', (char)0xE2, (char)0x80, (char)0x91, 'b'};
     static const char zwj_after_break[] =
         {'a', '-', (char)0xE2, (char)0x80, (char)0x8D, 'b'};
+    static const char zwj_before_break_before[] = {
+        'a', '-', (char)0xE2, (char)0x80, (char)0x8D,
+        (char)0xC2, (char)0xB4, 'b'};
     static const char zwnj_after_break[] =
         {'a', '-', (char)0xE2, (char)0x80, (char)0x8C, 'b'};
     static const char arabic_mark_after_break[] =
@@ -282,6 +285,10 @@ int main(void) {
                                            sizeof(zwj_after_break), 2u) !=
         RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 31;
+    if (rin_unicode_line_break_opportunity(zwj_before_break_before,
+                                           sizeof(zwj_before_break_before), 5u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 38;
     if (rin_unicode_line_break_opportunity(zwnj_after_break,
                                            sizeof(zwnj_after_break), 2u) !=
             RIN_UNICODE_LINE_BREAK_PROHIBITED ||
