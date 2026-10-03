@@ -14,7 +14,7 @@ int main(void) {
         'a', (char)0xcc, (char)0x80, (char)0xcc, (char)0x95, '\0'};
     static const uint32_t invalid_scalar[] = {0xd800u, 0u};
     static const uint32_t valid_scalar[] = {0xfffdu, 0u};
-    char transformed[sizeof(expected)] = {};
+    char transformed[sizeof(expected)] = {0};
     size_t transformed_size;
 
     if (rin_unicode_compare_utf8("A", "a") != 0)
