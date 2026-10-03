@@ -82,6 +82,8 @@ int main(void) {
         (char)0xF0, (char)0x9F, (char)0x87, (char)0xB5,
         (char)0xF0, (char)0x9F, (char)0x87, (char)0xA9,
         (char)0xF0, (char)0x9F, (char)0x87, (char)0xB5, '\0'};
+    static const char solidus[] = "a/b";
+    static const char numeric_solidus[] = "1/2";
     static const char nonstarter[][8] = {
         {'a', '-', (char)0xE3, (char)0x80, (char)0xBB, 'b', '\0'},
         {'a', '-', (char)0xE3, (char)0x87, (char)0xB0, 'b', '\0'},
@@ -334,6 +336,15 @@ int main(void) {
         rin_unicode_line_break_next(regional_indicators,
                                     sizeof(regional_indicators) - 1u, 0u) != 8u)
         return 33;
+    if (rin_unicode_line_break_opportunity(solidus, sizeof(solidus) - 1u, 1u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(solidus, sizeof(solidus) - 1u, 2u) !=
+            RIN_UNICODE_LINE_BREAK_ALLOWED ||
+        rin_unicode_line_break_next(solidus, sizeof(solidus) - 1u, 0u) != 2u ||
+        rin_unicode_line_break_opportunity(numeric_solidus,
+                                           sizeof(numeric_solidus) - 1u, 2u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 34;
     for (size_t index = 0u; index < sizeof(break_before_after) /
                                     sizeof(break_before_after[0]); ++index) {
         if (rin_unicode_line_break_opportunity(break_before_after[index], 5u,

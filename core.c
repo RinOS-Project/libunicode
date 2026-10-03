@@ -546,6 +546,10 @@ static int rin_unicode_line_break_is_regional_indicator(uint32_t cp) {
     return cp >= 0x1F1E6u && cp <= 0x1F1FFu;
 }
 
+static int rin_unicode_line_break_is_ascii_digit(uint32_t cp) {
+    return cp >= 0x30u && cp <= 0x39u;
+}
+
 static size_t rin_unicode_line_break_preceding_ri_count(const char* s,
                                                         size_t n,
                                                         size_t offset) {
@@ -661,6 +665,10 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
     if (first == 0x200Bu || first == 0x00ADu ||
         rin_unicode_line_break_is_space(first) ||
         rin_unicode_line_break_is_break_after(first))
+        return RIN_UNICODE_LINE_BREAK_ALLOWED;
+    /* Bounded UAX #14 SY coverage: a solidus may end a line, except before
+     * an ASCII digit so common numeric forms such as 1/2 stay intact. */
+    if (first == 0x002Fu && !rin_unicode_line_break_is_ascii_digit(next))
         return RIN_UNICODE_LINE_BREAK_ALLOWED;
     if (rin_unicode_line_break_is_open(first))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
