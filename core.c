@@ -550,6 +550,11 @@ static int rin_unicode_line_break_is_ascii_digit(uint32_t cp) {
     return cp >= 0x30u && cp <= 0x39u;
 }
 
+static int rin_unicode_line_break_is_ascii_letter(uint32_t cp) {
+    return (cp >= 0x41u && cp <= 0x5Au) ||
+           (cp >= 0x61u && cp <= 0x7Au);
+}
+
 static size_t rin_unicode_line_break_preceding_ri_count(const char* s,
                                                         size_t n,
                                                         size_t offset) {
@@ -624,6 +629,23 @@ static int rin_unicode_line_break_is_boundary(const char* s, size_t n,
     return have_scalar && cursor == offset;
 }
 
+static int rin_unicode_line_break_is_word_initial_hyphen(
+    const char* s, size_t n, size_t offset) {
+    size_t hyphen_start;
+    uint32_t before = 0u;
+    if (!s || offset == 0u) return 0;
+    hyphen_start = rin_unicode_grapheme_prev(s, n, offset);
+    if (hyphen_start >= offset) return 0;
+    if (hyphen_start == 0u) return 1;
+    if (!rin_unicode_line_break_is_boundary(s, n, hyphen_start, &before,
+                                            NULL))
+        return 0;
+    return rin_unicode_line_break_is_hard(before) ||
+           rin_unicode_line_break_is_space(before) ||
+           rin_unicode_line_break_is_non_break_space(before) ||
+           before == 0x180Eu || before == 0x200Bu || before == 0xFFFCu;
+}
+
 int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
     uint32_t first = 0u;
     uint32_t previous = 0u;
@@ -670,6 +692,12 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
      * hyphen-minus from a following ASCII digit.  This must precede the
      * general HY break-after rule so `1-2` remains one numeric expression. */
     if (first == 0x002Du && rin_unicode_line_break_is_ascii_digit(next))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    /* UAX #14 LB20a (bounded ASCII word context): a word-initial hyphen
+     * stays with the following letter. */
+    if (first == 0x002Du &&
+        rin_unicode_line_break_is_ascii_letter(next) &&
+        rin_unicode_line_break_is_word_initial_hyphen(s, n, offset))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (first == 0x200Bu || first == 0x00ADu ||
         rin_unicode_line_break_is_space(first) ||

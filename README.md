@@ -10,7 +10,8 @@ The line-break adapter includes a bounded UAX #14 subset: hard breaks,
 whitespace, BA/B2, the dictionary BB stress-mark cases U+00B4/U+1FFD/U+02C8/
 U+02CC/U+02DF, the LB8a zero-width-joiner no-break boundary, and CM-aware
 Regional Indicator flag runs, bounded ASCII `HY × NU` numeric protection,
-solidus URL/path breaks, common punctuation, and ideographic text.
+bounded ASCII word-initial-hyphen protection, solidus URL/path breaks, common
+punctuation, and ideographic text.
 It is not a full LineBreak property database or locale-tailored line-breaking
 implementation.
 
