@@ -67,6 +67,14 @@ int main(void) {
     static const char break_before_after[][6] = {
         {'a', (char)0xE2, (char)0x80, (char)0x94, 'b', '\0'}
     };
+    static const char break_before[][6] = {
+        {'a', (char)0xC2, (char)0xB4, 'b', '\0'},
+        {'a', (char)0xE1, (char)0xBF, (char)0xBD, 'b', '\0'},
+        {'a', (char)0xCB, (char)0x88, 'b', '\0'},
+        {'a', (char)0xCB, (char)0x8C, 'b', '\0'},
+        {'a', (char)0xCB, (char)0x9F, 'b', '\0'}
+    };
+    static const size_t break_before_lengths[] = {4u, 5u, 4u, 4u, 4u};
     static const char horizontal_bar[] = {
         'a', (char)0xE2, (char)0x80, (char)0x95, 'b', '\0'};
     static const char nonstarter[][8] = {
@@ -319,6 +327,18 @@ int main(void) {
                                                4u) !=
                 RIN_UNICODE_LINE_BREAK_ALLOWED)
             return 29;
+    }
+    for (size_t index = 0u; index < sizeof(break_before) /
+                                    sizeof(break_before[0]); ++index) {
+        if (rin_unicode_line_break_opportunity(break_before[index],
+                                               break_before_lengths[index], 1u) !=
+                RIN_UNICODE_LINE_BREAK_ALLOWED ||
+            rin_unicode_line_break_opportunity(break_before[index],
+                                               break_before_lengths[index],
+                                               break_before_lengths[index] -
+                                                   1u) !=
+                RIN_UNICODE_LINE_BREAK_PROHIBITED)
+            return 37;
     }
     if (rin_unicode_line_break_opportunity(horizontal_bar,
                                            sizeof(horizontal_bar) - 1u, 1u) !=

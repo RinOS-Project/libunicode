@@ -555,10 +555,13 @@ static int rin_unicode_line_break_is_break_after(uint32_t cp) {
 }
 
 static int rin_unicode_line_break_is_break_before(uint32_t cp) {
-    /* Bounded UAX #14 B2 coverage.  EM DASH is allowed on either side, but
-     * the open-punctuation rule below still wins for a boundary immediately
-     * after an opening delimiter.  U+2015 HORIZONTAL BAR is AI, not B2. */
-    return cp == 0x2014u;
+    /* Bounded UAX #14 B2/BB coverage.  EM DASH is allowed on either side,
+     * while dictionary stress marks provide a break before the mark and do
+     * not create a break after it.  The open-punctuation rule below still
+     * wins for a boundary immediately after an opening delimiter.
+     * U+2015 HORIZONTAL BAR is AI, not B2. */
+    return cp == 0x2014u || cp == 0x00B4u || cp == 0x1FFDu ||
+           cp == 0x02C8u || cp == 0x02CCu || cp == 0x02DFu;
 }
 
 static int rin_unicode_line_break_is_boundary(const char* s, size_t n,
