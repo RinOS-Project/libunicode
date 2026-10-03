@@ -484,8 +484,11 @@ static int rin_unicode_line_break_is_ideographic(uint32_t cp) {
            (cp >= 0x3400u && cp <= 0x4DBFu) ||
            (cp >= 0x4E00u && cp <= 0x9FFFu) ||
            (cp >= 0xF900u && cp <= 0xFAFFu) ||
-           (cp >= 0xAC00u && cp <= 0xD7A3u) ||
            (cp >= 0x20000u && cp <= 0x2FA1Fu);
+}
+
+static int rin_unicode_line_break_is_hangul_syllable(uint32_t cp) {
+    return cp >= 0xAC00u && cp <= 0xD7A3u;
 }
 
 static int rin_unicode_line_break_is_open(uint32_t cp) {
@@ -559,22 +562,27 @@ static size_t rin_unicode_line_break_preceding_ri_count(const char* s,
                                                         size_t n,
                                                         size_t offset) {
     size_t count = 0u;
-    size_t cursor = offset;
-    while (cursor != 0u) {
-        const size_t start = rin_unicode_grapheme_prev(s, n, cursor);
+    size_t cursor = 0u;
+    int effective_ri = 0;
+    if (offset > n) return 0u;
+    while (cursor < offset) {
         uint32_t cp = 0u;
         size_t consumed = 0u;
-        if (start >= cursor) break;
-        /* UAX #14 LB9 gives a combining mark the effective line-break
-         * class of the grapheme cluster's base.  Count the cluster by its
-         * first scalar so RI + CM still participates in LB30a. */
-        (void)rin_unicode_decode_utf8_lossy(s + start, cursor - start, &cp,
+        (void)rin_unicode_decode_utf8_lossy(s + cursor, offset - cursor, &cp,
                                             &consumed);
-        if (consumed == 0u || consumed > cursor - start ||
-            !rin_unicode_line_break_is_regional_indicator(cp))
-            return count;
-        ++count;
-        cursor = start;
+        if (consumed == 0u || consumed > offset - cursor) break;
+        if (rin_unicode_line_break_is_regional_indicator(cp)) {
+            ++count;
+            effective_ri = 1;
+        } else if (!rin_unicode_line_break_is_extend(cp)) {
+            /* UAX #14 LB9 gives CM/ZWJ the preceding effective class, but
+             * any other scalar terminates the regional-indicator run. */
+            count = 0u;
+            effective_ri = 0;
+        } else if (!effective_ri) {
+            count = 0u;
+        }
+        cursor += consumed;
     }
     return count;
 }
@@ -609,6 +617,36 @@ static int rin_unicode_line_break_is_contingent_break(uint32_t cp) {
     return cp == 0xFFFCu;
 }
 
+static int rin_unicode_line_break_is_ri_scalar_boundary(const char* s,
+                                                        size_t n,
+                                                        size_t offset,
+                                                        uint32_t* first,
+                                                        uint32_t* last) {
+    size_t start;
+    size_t cursor;
+    uint32_t previous = 0u;
+    uint32_t next = 0u;
+    size_t consumed = 0u;
+    if (!s || offset == 0u || offset >= n) return 0;
+    start = rin_unicode_grapheme_prev(s, n, offset);
+    if (start >= offset) return 0;
+    cursor = start;
+    while (cursor < offset) {
+        (void)rin_unicode_decode_utf8_lossy(s + cursor, offset - cursor,
+                                            &previous, &consumed);
+        if (consumed == 0u || consumed > offset - cursor) return 0;
+        cursor += consumed;
+    }
+    (void)rin_unicode_decode_utf8_lossy(s + offset, n - offset, &next,
+                                        &consumed);
+    if (consumed == 0u || !rin_unicode_is_regional_indicator(previous) ||
+        !rin_unicode_is_regional_indicator(next))
+        return 0;
+    if (first) *first = previous;
+    if (last) *last = previous;
+    return 1;
+}
+
 static int rin_unicode_line_break_is_boundary(const char* s, size_t n,
                                                size_t offset,
                                                uint32_t* first,
@@ -618,8 +656,10 @@ static int rin_unicode_line_break_is_boundary(const char* s, size_t n,
     int have_scalar = 0;
     if (!s || offset == 0u || offset > n) return 0;
     start = rin_unicode_grapheme_prev(s, n, offset);
-    if (start >= offset || rin_unicode_grapheme_next(s, n, start) != offset)
-        return 0;
+    if (start >= offset || rin_unicode_grapheme_next(s, n, start) != offset) {
+        return rin_unicode_line_break_is_ri_scalar_boundary(s, n, offset,
+                                                             first, last);
+    }
     cursor = start;
     while (cursor < offset) {
         uint32_t cp = 0u;
@@ -697,8 +737,10 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
     if (rin_unicode_line_break_is_nonstarter(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     /* UAX #14 LB21: a line cannot begin with a break-after character or a
-     * hyphen.  Keep this ahead of the ordinary break-after rule so a space
-     * before `-` or a BA character does not reopen a prohibited boundary. */
+     * hyphen.  B2 characters such as EM DASH are both break-before and
+     * break-after; honor their break-before side before this guard. */
+    if (rin_unicode_line_break_is_break_before(next))
+        return RIN_UNICODE_LINE_BREAK_ALLOWED;
     if (rin_unicode_line_break_is_break_after(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (rin_unicode_line_break_is_hard(next) ||
@@ -725,13 +767,16 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
         return RIN_UNICODE_LINE_BREAK_ALLOWED;
     if (rin_unicode_line_break_is_open(first))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
-    if (rin_unicode_line_break_is_break_before(next))
-        return RIN_UNICODE_LINE_BREAK_ALLOWED;
     if (rin_unicode_line_break_is_close(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     /* UAX #14 LB9: the first scalar carries the effective class for a
      * grapheme cluster containing CM.  Keep LB30a and the ideographic rules
      * correct when a visible base is followed by combining marks. */
+    /* UAX #14 LB26 (bounded H2/H3 coverage): adjacent precomposed Hangul
+     * syllables stay together. */
+    if (rin_unicode_line_break_is_hangul_syllable(first) &&
+        rin_unicode_line_break_is_hangul_syllable(next))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     /* UAX #14 LB30a: keep a flag pair together, but allow a break after an
      * even-length run of regional indicators before the next indicator. */
     if (rin_unicode_line_break_is_regional_indicator(first) &&
@@ -759,10 +804,19 @@ size_t rin_unicode_line_break_next(const char* s, size_t n, size_t offset) {
     cursor = offset;
     while (cursor < n) {
         size_t next = rin_unicode_grapheme_next(s, n, cursor);
+        size_t candidate = cursor;
         if (next <= cursor) break;
-        if (rin_unicode_line_break_opportunity(s, n, next) !=
-            RIN_UNICODE_LINE_BREAK_PROHIBITED)
-            return next;
+        while (candidate < next) {
+            size_t candidate_len = 0u;
+            uint32_t candidate_cp = 0u;
+            (void)rin_unicode_decode_utf8_lossy(s + candidate, next - candidate,
+                                                &candidate_cp, &candidate_len);
+            if (candidate_len == 0u || candidate_len > next - candidate) break;
+            candidate += candidate_len;
+            if (rin_unicode_line_break_opportunity(s, n, candidate) !=
+                RIN_UNICODE_LINE_BREAK_PROHIBITED)
+                return candidate;
+        }
         cursor = next;
     }
     return n;

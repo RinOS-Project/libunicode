@@ -16,6 +16,10 @@ int main(void) {
         (char)0xE6, (char)0x9C, (char)0xAC,
         (char)0xE8, (char)0xAA, (char)0x9E, '\0'
     };
+    static const char hangul_syllables[] = {
+        (char)0xEA, (char)0xB0, (char)0x80,
+        (char)0xEB, (char)0x82, (char)0x98, '\0'
+    };
     static const char family[] =
         "\xF0\x9F\x91\xA9\xE2\x80\x8D\xF0\x9F\x91\xA9" "x";
     static const char punctuation[] = "(word)";
@@ -359,6 +363,14 @@ int main(void) {
             sizeof(regional_indicator_with_mark) - 1u, 10u) !=
         RIN_UNICODE_LINE_BREAK_ALLOWED)
         return 39;
+    if (rin_unicode_line_break_next(regional_indicator_with_mark,
+                                    sizeof(regional_indicator_with_mark) - 1u,
+                                    0u) != 10u)
+        return 140;
+    if (rin_unicode_line_break_opportunity(hangul_syllables,
+                                           sizeof(hangul_syllables) - 1u, 3u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 139;
     if (rin_unicode_line_break_opportunity(solidus, sizeof(solidus) - 1u, 1u) !=
             RIN_UNICODE_LINE_BREAK_PROHIBITED ||
         rin_unicode_line_break_opportunity(solidus, sizeof(solidus) - 1u, 2u) !=
