@@ -666,6 +666,11 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
     if (rin_unicode_line_break_is_hard(next) ||
         rin_unicode_line_break_is_extend(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    /* UAX #14 LB25 (bounded ASCII numeric context): do not split a
+     * hyphen-minus from a following ASCII digit.  This must precede the
+     * general HY break-after rule so `1-2` remains one numeric expression. */
+    if (first == 0x002Du && rin_unicode_line_break_is_ascii_digit(next))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (first == 0x200Bu || first == 0x00ADu ||
         rin_unicode_line_break_is_space(first) ||
         rin_unicode_line_break_is_break_after(first))
