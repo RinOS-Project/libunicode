@@ -542,6 +542,35 @@ static int rin_unicode_line_break_is_nonstarter(uint32_t cp) {
            cp == 0xFF9Eu || cp == 0xFF9Fu;
 }
 
+static int rin_unicode_line_break_is_regional_indicator(uint32_t cp) {
+    return cp >= 0x1F1E6u && cp <= 0x1F1FFu;
+}
+
+static size_t rin_unicode_line_break_preceding_ri_count(const char* s,
+                                                        size_t n,
+                                                        size_t offset) {
+    size_t count = 0u;
+    size_t cursor = offset;
+    while (cursor != 0u) {
+        const size_t start = rin_unicode_grapheme_prev(s, n, cursor);
+        size_t scalar = start;
+        if (start >= cursor) break;
+        while (scalar < cursor) {
+            uint32_t cp = 0u;
+            size_t consumed = 0u;
+            (void)rin_unicode_decode_utf8_lossy(s + scalar, cursor - scalar,
+                                               &cp, &consumed);
+            if (consumed == 0u || consumed > cursor - scalar ||
+                !rin_unicode_line_break_is_regional_indicator(cp))
+                return count;
+            ++count;
+            scalar += consumed;
+        }
+        cursor = start;
+    }
+    return count;
+}
+
 static int rin_unicode_line_break_is_break_after(uint32_t cp) {
     /* Unicode 13.0.0 BA data covers punctuation, spaces, and script-specific
      * separators.  Keep the explicit HY and B2 cases used by this bounded
@@ -639,6 +668,15 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
         return RIN_UNICODE_LINE_BREAK_ALLOWED;
     if (rin_unicode_line_break_is_close(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    /* UAX #14 LB30a: keep a flag pair together, but allow a break after an
+     * even-length run of regional indicators before the next indicator. */
+    if (rin_unicode_line_break_is_regional_indicator(previous) &&
+        rin_unicode_line_break_is_regional_indicator(next)) {
+        return (rin_unicode_line_break_preceding_ri_count(s, n, offset) & 1u) ==
+                       0u
+                   ? RIN_UNICODE_LINE_BREAK_ALLOWED
+                   : RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    }
     if (rin_unicode_line_break_is_ideographic(previous) &&
         rin_unicode_line_break_is_ideographic(next))
         return RIN_UNICODE_LINE_BREAK_ALLOWED;
