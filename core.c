@@ -601,6 +601,14 @@ static int rin_unicode_line_break_is_break_before(uint32_t cp) {
            cp == 0x02C8u || cp == 0x02CCu || cp == 0x02DFu;
 }
 
+static int rin_unicode_line_break_is_contingent_break(uint32_t cp) {
+    /* UAX #14 CB: an inline object has a default opportunity on both sides.
+     * The public adapter has no object-specific override channel, so expose
+     * the default break while retaining the earlier non-break rules (WJ and
+     * ZWJ) as higher-priority safeguards. */
+    return cp == 0xFFFCu;
+}
+
 static int rin_unicode_line_break_is_boundary(const char* s, size_t n,
                                                size_t offset,
                                                uint32_t* first,
@@ -679,11 +687,19 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
      * a dictionary stress mark cannot accidentally reopen a break. */
     if (previous == 0x200Du)
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    if (rin_unicode_line_break_is_contingent_break(first) ||
+        rin_unicode_line_break_is_contingent_break(next))
+        return RIN_UNICODE_LINE_BREAK_ALLOWED;
     /* UAX #14 LB7: a break is not allowed immediately before a space.  This
      * also prevents a run of ordinary spaces from being split internally. */
     if (rin_unicode_line_break_is_space(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (rin_unicode_line_break_is_nonstarter(next))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    /* UAX #14 LB21: a line cannot begin with a break-after character or a
+     * hyphen.  Keep this ahead of the ordinary break-after rule so a space
+     * before `-` or a BA character does not reopen a prohibited boundary. */
+    if (rin_unicode_line_break_is_break_after(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
     if (rin_unicode_line_break_is_hard(next) ||
         rin_unicode_line_break_is_extend(next))

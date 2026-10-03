@@ -95,6 +95,9 @@ int main(void) {
     static const char numeric_hyphen[] = "1-2";
     static const char initial_hyphen[] = "-a";
     static const char embedded_hyphen[] = "a-b";
+    static const char object_boundary[] = {
+        'a', (char)0xEF, (char)0xBF, (char)0xBC, 'b', '\0'};
+    static const char space_before_hyphen[] = "a -b";
     static const char nonstarter[][8] = {
         {'a', '-', (char)0xE3, (char)0x80, (char)0xBB, 'b', '\0'},
         {'a', '-', (char)0xE3, (char)0x87, (char)0xB0, 'b', '\0'},
@@ -376,6 +379,20 @@ int main(void) {
                                            sizeof(embedded_hyphen) - 1u, 2u) !=
             RIN_UNICODE_LINE_BREAK_ALLOWED)
         return 41;
+    if (rin_unicode_line_break_opportunity(object_boundary,
+                                           sizeof(object_boundary) - 1u, 1u) !=
+            RIN_UNICODE_LINE_BREAK_ALLOWED ||
+        rin_unicode_line_break_opportunity(object_boundary,
+                                           sizeof(object_boundary) - 1u, 4u) !=
+            RIN_UNICODE_LINE_BREAK_ALLOWED ||
+        rin_unicode_line_break_next(object_boundary,
+                                    sizeof(object_boundary) - 1u, 0u) != 1u)
+        return 42;
+    if (rin_unicode_line_break_opportunity(space_before_hyphen,
+                                           sizeof(space_before_hyphen) - 1u,
+                                           2u) !=
+        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        return 43;
     for (size_t index = 0u; index < sizeof(break_before_after) /
                                     sizeof(break_before_after[0]); ++index) {
         if (rin_unicode_line_break_opportunity(break_before_after[index], 5u,
