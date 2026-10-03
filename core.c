@@ -557,19 +557,18 @@ static size_t rin_unicode_line_break_preceding_ri_count(const char* s,
     size_t cursor = offset;
     while (cursor != 0u) {
         const size_t start = rin_unicode_grapheme_prev(s, n, cursor);
-        size_t scalar = start;
+        uint32_t cp = 0u;
+        size_t consumed = 0u;
         if (start >= cursor) break;
-        while (scalar < cursor) {
-            uint32_t cp = 0u;
-            size_t consumed = 0u;
-            (void)rin_unicode_decode_utf8_lossy(s + scalar, cursor - scalar,
-                                               &cp, &consumed);
-            if (consumed == 0u || consumed > cursor - scalar ||
-                !rin_unicode_line_break_is_regional_indicator(cp))
-                return count;
-            ++count;
-            scalar += consumed;
-        }
+        /* UAX #14 LB9 gives a combining mark the effective line-break
+         * class of the grapheme cluster's base.  Count the cluster by its
+         * first scalar so RI + CM still participates in LB30a. */
+        (void)rin_unicode_decode_utf8_lossy(s + start, cursor - start, &cp,
+                                            &consumed);
+        if (consumed == 0u || consumed > cursor - start ||
+            !rin_unicode_line_break_is_regional_indicator(cp))
+            return count;
+        ++count;
         cursor = start;
     }
     return count;
@@ -681,19 +680,22 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
         return RIN_UNICODE_LINE_BREAK_ALLOWED;
     if (rin_unicode_line_break_is_close(next))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    /* UAX #14 LB9: the first scalar carries the effective class for a
+     * grapheme cluster containing CM.  Keep LB30a and the ideographic rules
+     * correct when a visible base is followed by combining marks. */
     /* UAX #14 LB30a: keep a flag pair together, but allow a break after an
      * even-length run of regional indicators before the next indicator. */
-    if (rin_unicode_line_break_is_regional_indicator(previous) &&
+    if (rin_unicode_line_break_is_regional_indicator(first) &&
         rin_unicode_line_break_is_regional_indicator(next)) {
         return (rin_unicode_line_break_preceding_ri_count(s, n, offset) & 1u) ==
                        0u
                    ? RIN_UNICODE_LINE_BREAK_ALLOWED
                    : RIN_UNICODE_LINE_BREAK_PROHIBITED;
     }
-    if (rin_unicode_line_break_is_ideographic(previous) &&
+    if (rin_unicode_line_break_is_ideographic(first) &&
         rin_unicode_line_break_is_ideographic(next))
         return RIN_UNICODE_LINE_BREAK_ALLOWED;
-    if (rin_unicode_line_break_is_close(previous) &&
+    if (rin_unicode_line_break_is_close(first) &&
         rin_unicode_line_break_is_ideographic(next))
         return RIN_UNICODE_LINE_BREAK_ALLOWED;
     return RIN_UNICODE_LINE_BREAK_PROHIBITED;

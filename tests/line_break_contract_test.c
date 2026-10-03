@@ -85,6 +85,11 @@ int main(void) {
         (char)0xF0, (char)0x9F, (char)0x87, (char)0xB5,
         (char)0xF0, (char)0x9F, (char)0x87, (char)0xA9,
         (char)0xF0, (char)0x9F, (char)0x87, (char)0xB5, '\0'};
+    static const char regional_indicator_with_mark[] = {
+        (char)0xF0, (char)0x9F, (char)0x87, (char)0xAF,
+        (char)0xCC, (char)0x81,
+        (char)0xF0, (char)0x9F, (char)0x87, (char)0xB5,
+        (char)0xF0, (char)0x9F, (char)0x87, (char)0xA9, '\0'};
     static const char solidus[] = "a/b";
     static const char numeric_solidus[] = "1/2";
     static const char nonstarter[][8] = {
@@ -343,6 +348,11 @@ int main(void) {
         rin_unicode_line_break_next(regional_indicators,
                                     sizeof(regional_indicators) - 1u, 0u) != 8u)
         return 33;
+    if (rin_unicode_line_break_opportunity(
+            regional_indicator_with_mark,
+            sizeof(regional_indicator_with_mark) - 1u, 10u) !=
+        RIN_UNICODE_LINE_BREAK_ALLOWED)
+        return 39;
     if (rin_unicode_line_break_opportunity(solidus, sizeof(solidus) - 1u, 1u) !=
             RIN_UNICODE_LINE_BREAK_PROHIBITED ||
         rin_unicode_line_break_opportunity(solidus, sizeof(solidus) - 1u, 2u) !=
