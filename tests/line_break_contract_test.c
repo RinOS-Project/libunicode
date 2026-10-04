@@ -20,6 +20,22 @@ int main(void) {
         (char)0xEA, (char)0xB0, (char)0x80,
         (char)0xEB, (char)0x82, (char)0x98, '\0'
     };
+    static const char hangul_jamo_jl_jv[] = {
+        (char)0xE1, (char)0x84, (char)0x80,
+        (char)0xE1, (char)0x85, (char)0xA1, '\0'
+    };
+    static const char hangul_jamo_jv_jt[] = {
+        (char)0xE1, (char)0x85, (char)0xA1,
+        (char)0xE1, (char)0x86, (char)0xA8, '\0'
+    };
+    static const char hangul_jamo_jt_jt[] = {
+        (char)0xE1, (char)0x86, (char)0xA8,
+        (char)0xE1, (char)0x86, (char)0xA9, '\0'
+    };
+    static const char hangul_jamo_h3_jt[] = {
+        (char)0xEA, (char)0xB0, (char)0x81,
+        (char)0xE1, (char)0x86, (char)0xA8, '\0'
+    };
     static const char family[] =
         "\xF0\x9F\x91\xA9\xE2\x80\x8D\xF0\x9F\x91\xA9" "x";
     static const char punctuation[] = "(word)";
@@ -369,7 +385,19 @@ int main(void) {
         return 140;
     if (rin_unicode_line_break_opportunity(hangul_syllables,
                                            sizeof(hangul_syllables) - 1u, 3u) !=
-        RIN_UNICODE_LINE_BREAK_PROHIBITED)
+        RIN_UNICODE_LINE_BREAK_ALLOWED ||
+        rin_unicode_line_break_opportunity(
+            hangul_jamo_jl_jv, sizeof(hangul_jamo_jl_jv) - 1u, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(
+            hangul_jamo_jv_jt, sizeof(hangul_jamo_jv_jt) - 1u, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(
+            hangul_jamo_jt_jt, sizeof(hangul_jamo_jt_jt) - 1u, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED ||
+        rin_unicode_line_break_opportunity(
+            hangul_jamo_h3_jt, sizeof(hangul_jamo_h3_jt) - 1u, 3u) !=
+            RIN_UNICODE_LINE_BREAK_PROHIBITED)
         return 139;
     if (rin_unicode_line_break_opportunity(solidus, sizeof(solidus) - 1u, 1u) !=
             RIN_UNICODE_LINE_BREAK_PROHIBITED ||

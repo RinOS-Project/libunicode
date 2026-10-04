@@ -487,8 +487,37 @@ static int rin_unicode_line_break_is_ideographic(uint32_t cp) {
            (cp >= 0x20000u && cp <= 0x2FA1Fu);
 }
 
-static int rin_unicode_line_break_is_hangul_syllable(uint32_t cp) {
-    return cp >= 0xAC00u && cp <= 0xD7A3u;
+static int rin_unicode_line_break_is_hangul_jl(uint32_t cp) {
+    return (cp >= 0x1100u && cp <= 0x115Fu) ||
+           (cp >= 0xA960u && cp <= 0xA97Cu);
+}
+
+static int rin_unicode_line_break_is_hangul_jv(uint32_t cp) {
+    return (cp >= 0x1160u && cp <= 0x11A7u) ||
+           (cp >= 0xD7B0u && cp <= 0xD7C6u);
+}
+
+static int rin_unicode_line_break_is_hangul_jt(uint32_t cp) {
+    return (cp >= 0x11A8u && cp <= 0x11FFu) ||
+           (cp >= 0xD7CBu && cp <= 0xD7FBu);
+}
+
+static int rin_unicode_line_break_is_hangul_h2(uint32_t cp) {
+    return cp >= 0xAC00u && cp <= 0xD7A3u &&
+           ((cp - 0xAC00u) % 28u) == 0u;
+}
+
+static int rin_unicode_line_break_is_hangul_h3(uint32_t cp) {
+    return cp >= 0xAC00u && cp <= 0xD7A3u &&
+           ((cp - 0xAC00u) % 28u) != 0u;
+}
+
+static int rin_unicode_line_break_is_hangul_lb26_class(uint32_t cp) {
+    return rin_unicode_line_break_is_hangul_jl(cp) ||
+           rin_unicode_line_break_is_hangul_jv(cp) ||
+           rin_unicode_line_break_is_hangul_jt(cp) ||
+           rin_unicode_line_break_is_hangul_h2(cp) ||
+           rin_unicode_line_break_is_hangul_h3(cp);
 }
 
 static int rin_unicode_line_break_is_open(uint32_t cp) {
@@ -772,11 +801,28 @@ int rin_unicode_line_break_opportunity(const char* s, size_t n, size_t offset) {
     /* UAX #14 LB9: the first scalar carries the effective class for a
      * grapheme cluster containing CM.  Keep LB30a and the ideographic rules
      * correct when a visible base is followed by combining marks. */
-    /* UAX #14 LB26 (bounded H2/H3 coverage): adjacent precomposed Hangul
-     * syllables stay together. */
-    if (rin_unicode_line_break_is_hangul_syllable(first) &&
-        rin_unicode_line_break_is_hangul_syllable(next))
+    /* UAX #14 LB26: keep Hangul Jamo and syllable pieces together while
+     * allowing a break between complete precomposed syllables.  Treat H2/H3
+     * as the LV/LVT classes derived from the syllable's trailing-jamo index;
+     * a blanket H2/H3 prohibition would incorrectly join unrelated words. */
+    if (rin_unicode_line_break_is_hangul_jl(first) &&
+        (rin_unicode_line_break_is_hangul_jl(next) ||
+         rin_unicode_line_break_is_hangul_jv(next) ||
+         rin_unicode_line_break_is_hangul_h2(next) ||
+         rin_unicode_line_break_is_hangul_h3(next)))
         return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    if ((rin_unicode_line_break_is_hangul_jv(first) ||
+         rin_unicode_line_break_is_hangul_h2(first)) &&
+        (rin_unicode_line_break_is_hangul_jv(next) ||
+         rin_unicode_line_break_is_hangul_jt(next)))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    if ((rin_unicode_line_break_is_hangul_jt(first) ||
+         rin_unicode_line_break_is_hangul_h3(first)) &&
+        rin_unicode_line_break_is_hangul_jt(next))
+        return RIN_UNICODE_LINE_BREAK_PROHIBITED;
+    if (rin_unicode_line_break_is_hangul_lb26_class(first) &&
+        rin_unicode_line_break_is_hangul_lb26_class(next))
+        return RIN_UNICODE_LINE_BREAK_ALLOWED;
     /* UAX #14 LB30a: keep a flag pair together, but allow a break after an
      * even-length run of regional indicators before the next indicator. */
     if (rin_unicode_line_break_is_regional_indicator(first) &&

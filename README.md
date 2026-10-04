@@ -19,9 +19,10 @@ punctuation, contingent inline-object breaks (U+FFFC), LB21 hyphen/BA
 no-break-before handling, and ideographic text.
 It is not a full LineBreak property database or locale-tailored line-breaking
 implementation.
-Adjacent precomposed Hangul syllables are kept together before the bounded
-ideographic break rule (the H2/H3 LB26 boundary); full Hangul Jamo and locale
-tailoring remain outside this subset.
+UAX #14 LB26 is covered for Hangul JL/JV/JT pieces and derived H2/H3
+syllable classes; complete precomposed syllables can break from one another,
+while Jamo composition boundaries remain prohibited. Full LineBreak property
+data and locale tailoring remain outside this subset.
 
 The CMake contract tests are enabled with
 `-DRIN_UNICODE_BUILD_TESTS=ON`; Meson exposes the same four
