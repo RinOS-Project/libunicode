@@ -9,6 +9,12 @@ mutable state. The standalone core target does not own locale files,
 filesystem access, or service publication; the locale adapter remains part of
 the RinOS libc/runtime owner graph.
 
+The UTF-8 and UTF-32 normalization APIs use generated Unicode 17.0.0
+decomposition, composition-exclusion, and canonical-combining-class data.
+`rin_unicode_normalization_database_version()` reports that table version
+separately from `rin_unicode_database_version()`, which describes the other
+generated core property and case-fold tables.
+
 The line-break adapter includes a bounded UAX #14 subset: hard breaks,
 whitespace, BA/B2 (including the two-sided EM DASH case), the dictionary BB
 stress-mark cases U+00B4/U+1FFD/U+02C8/U+02CC/U+02DF, the LB8a zero-width-
@@ -30,5 +36,7 @@ The CMake contract tests are enabled with
 and exercise the caller-visible Unicode contracts.
 
 The IDNA snapshot is regenerated with `python generate_idna_data.py` from the
-pinned Unicode 17.0.0 archives in `idna-data/`. See
+pinned Unicode 17.0.0 archives in `idna-data/`. Normalization data is
+regenerated with `python generate_normalization_data.py` from the same UCD
+archive. See
 `IDNA-DATA-LICENSE.md` for Unicode data terms and source links.

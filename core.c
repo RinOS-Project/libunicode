@@ -18,6 +18,13 @@ typedef struct RinUnicodeCompositionEntry {
     uint32_t composed;
 } RinUnicodeCompositionEntry;
 
+typedef struct RinUnicodeNormalizationDecompositionEntry {
+    uint32_t codepoint;
+    uint32_t mapping_offset;
+    uint8_t length;
+    uint8_t compatibility;
+} RinUnicodeNormalizationDecompositionEntry;
+
 typedef struct RinUnicodeCaseMapEntry {
     uint32_t codepoint;
     uint32_t mapped;
@@ -30,11 +37,13 @@ typedef struct RinUnicodeCaseFoldEntry {
 } RinUnicodeCaseFoldEntry;
 
 #include "generated_data.h"
+#include "generated_normalization_data.h"
 #include "extended_pictographic_data.h"
 #include "grapheme_break_data.h"
 #include "line_break_data.h"
 
-#define RIN_UNICODE_DECOMP_SEGMENT 18u
+#define RIN_UNICODE_DECOMP_SEGMENT \
+    RIN_UNICODE_NORMALIZATION_MAX_EXPANSION
 #define RIN_UNICODE_NORMALIZATION_SEGMENT 64u
 
 enum {
@@ -54,6 +63,10 @@ enum {
 
 const char* rin_unicode_database_version(void) {
     return RIN_UNICODE_GENERATED_DATABASE_VERSION;
+}
+
+const char* rin_unicode_normalization_database_version(void) {
+    return RIN_UNICODE_NORMALIZATION_DATABASE_VERSION;
 }
 
 enum {
@@ -1057,6 +1070,118 @@ static uint32_t rin_unicode_try_compose(uint32_t lhs, uint32_t rhs) {
     return 0u;
 }
 
+static const RinUnicodeNormalizationDecompositionEntry*
+rin_unicode_find_normalization_decomposition(uint32_t cp,
+                                              int compatibility) {
+    size_t first = 0u;
+    size_t last = g_rin_unicode_normalization_decomposition_count;
+    while (first < last) {
+        size_t middle = first + (last - first) / 2u;
+        const RinUnicodeNormalizationDecompositionEntry* entry =
+            &g_rin_unicode_normalization_decompositions[middle];
+        if (entry->codepoint < cp) {
+            first = middle + 1u;
+        } else if (entry->codepoint > cp) {
+            last = middle;
+        } else {
+            if (!compatibility && entry->compatibility)
+                return (const RinUnicodeNormalizationDecompositionEntry*)0;
+            return entry;
+        }
+    }
+    return (const RinUnicodeNormalizationDecompositionEntry*)0;
+}
+
+static uint8_t rin_unicode_normalization_combining_class(uint32_t cp) {
+    size_t first = 0u;
+    size_t last = g_rin_unicode_normalization_combining_class_count;
+    while (first < last) {
+        size_t middle = first + (last - first) / 2u;
+        const RinUnicodeCombiningClassEntry* entry =
+            &g_rin_unicode_normalization_combining_classes[middle];
+        if (entry->codepoint < cp) {
+            first = middle + 1u;
+        } else if (entry->codepoint > cp) {
+            last = middle;
+        } else {
+            return entry->canonical_class;
+        }
+    }
+    return 0u;
+}
+
+static uint32_t rin_unicode_normalization_try_compose(uint32_t lhs,
+                                                      uint32_t rhs) {
+    size_t first;
+    size_t last;
+    if (lhs >= 0x1100u && lhs < 0x1100u + 19u &&
+        rhs >= 0x1161u && rhs < 0x1161u + 21u) {
+        const uint32_t l_index = lhs - 0x1100u;
+        const uint32_t v_index = rhs - 0x1161u;
+        return 0xac00u + (l_index * 21u + v_index) * 28u;
+    }
+    if (lhs >= 0xac00u && lhs < 0xac00u + 11172u &&
+        (lhs - 0xac00u) % 28u == 0u &&
+        rhs > 0x11a7u && rhs < 0x11a7u + 28u)
+        return lhs + (rhs - 0x11a7u);
+
+    first = 0u;
+    last = g_rin_unicode_normalization_composition_count;
+    while (first < last) {
+        size_t middle = first + (last - first) / 2u;
+        const RinUnicodeCompositionEntry* entry =
+            &g_rin_unicode_normalization_compositions[middle];
+        if (entry->first < lhs ||
+            (entry->first == lhs && entry->second < rhs)) {
+            first = middle + 1u;
+        } else if (entry->first > lhs || entry->second > rhs) {
+            last = middle;
+        } else {
+            return entry->composed;
+        }
+    }
+    return 0u;
+}
+
+static int rin_unicode_normalization_decompose_scalar(
+    uint32_t cp, int compatibility, uint32_t* dest, size_t dest_cap,
+    size_t* offset, unsigned depth) {
+    const RinUnicodeNormalizationDecompositionEntry* entry;
+    size_t index;
+    if (!dest || !offset || depth > 32u) return 0;
+    if (cp >= 0xac00u && cp < 0xac00u + 11172u) {
+        const uint32_t s_index = cp - 0xac00u;
+        if (*offset >= dest_cap) return 0;
+        dest[(*offset)++] = 0x1100u + s_index / (21u * 28u);
+        if (*offset >= dest_cap) return 0;
+        dest[(*offset)++] =
+            0x1161u + (s_index % (21u * 28u)) / 28u;
+        if (s_index % 28u != 0u) {
+            if (*offset >= dest_cap) return 0;
+            dest[(*offset)++] = 0x11a7u + s_index % 28u;
+        }
+        return 1;
+    }
+    entry = rin_unicode_find_normalization_decomposition(cp, compatibility);
+    if (!entry) {
+        if (*offset >= dest_cap) return 0;
+        dest[(*offset)++] = cp;
+        return 1;
+    }
+    if ((size_t)entry->mapping_offset + entry->length >
+        sizeof(g_rin_unicode_normalization_mappings) /
+            sizeof(g_rin_unicode_normalization_mappings[0]))
+        return 0;
+    for (index = 0u; index < entry->length; ++index) {
+        if (!rin_unicode_normalization_decompose_scalar(
+                g_rin_unicode_normalization_mappings[
+                    entry->mapping_offset + index],
+                compatibility, dest, dest_cap, offset, depth + 1u))
+            return 0;
+    }
+    return 1;
+}
+
 static uint32_t rin_unicode_case_map(const RinUnicodeCaseMapEntry* entries,
                                      size_t count, uint32_t cp) {
     size_t first = 0u;
@@ -1336,7 +1461,7 @@ static int rin_unicode_normalization_flush(RinUnicodeNormalizationState* state) 
         uint8_t canonical_class = state->classes[i];
         if (state->compose && canonical_class != 0u && starter != (size_t)-1 &&
             last_class < canonical_class) {
-            uint32_t composed = rin_unicode_try_compose(
+            uint32_t composed = rin_unicode_normalization_try_compose(
                 state->segment[starter], cp);
             if (composed != 0u) {
                 state->segment[starter] = composed;
@@ -1367,19 +1492,21 @@ static int rin_unicode_normalization_feed(RinUnicodeNormalizationState* state,
     uint32_t decomposed[RIN_UNICODE_DECOMP_SEGMENT];
     size_t decomposed_length;
     if (!state) return RIN_UNICODE_INVALID;
-    decomposed_length = rin_unicode_decompose_scalar(
-        cp, state->compatibility,
-        decomposed, RIN_UNICODE_DECOMP_SEGMENT, 0u);
-    if (decomposed_length > RIN_UNICODE_DECOMP_SEGMENT)
+    decomposed_length = 0u;
+    if (!rin_unicode_normalization_decompose_scalar(
+            cp, state->compatibility, decomposed,
+            RIN_UNICODE_DECOMP_SEGMENT, &decomposed_length, 0u))
         return RIN_UNICODE_INVALID;
     for (size_t index = 0u; index < decomposed_length; ++index) {
         uint32_t item = decomposed[index];
-        uint8_t canonical_class = rin_unicode_combining_class(item);
+        uint8_t canonical_class =
+            rin_unicode_normalization_combining_class(item);
         size_t position;
         if (state->compose && canonical_class == 0u &&
             state->segment_length != 0u) {
             const size_t last = state->segment_length - 1u;
-            const uint32_t composed = rin_unicode_try_compose(
+            const uint32_t composed =
+                rin_unicode_normalization_try_compose(
                 state->segment[last], item);
             if (composed != 0u && state->classes[last] == 0u) {
                 state->segment[last] = composed;

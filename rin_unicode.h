@@ -83,6 +83,9 @@ enum {
  * this library.  The returned pointer is static storage owned by LibUnicode;
  * callers must not modify or retain it beyond the process lifetime. */
 const char* rin_unicode_database_version(void);
+/* Normalization tables have an independent version because other property
+ * and case-fold tables may use a different generated Unicode snapshot. */
+const char* rin_unicode_normalization_database_version(void);
 
 int rin_unicode_is_valid_scalar(uint32_t cp);
 int rin_unicode_validate_utf8(const char* s, size_t n, size_t* valid_prefix);
