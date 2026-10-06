@@ -1037,39 +1037,6 @@ static uint8_t rin_unicode_combining_class(uint32_t cp) {
     return 0u;
 }
 
-static uint32_t rin_unicode_try_compose(uint32_t lhs, uint32_t rhs) {
-    /* Hangul syllable composition is algorithmic and is not represented by
-     * the generated composition table.  Keep it here so all four public
-     * normalization forms share the same bounded path. */
-    if (lhs >= 0x1100u && lhs < 0x1100u + 19u &&
-        rhs >= 0x1161u && rhs < 0x1161u + 21u) {
-        const uint32_t l_index = lhs - 0x1100u;
-        const uint32_t v_index = rhs - 0x1161u;
-        return 0xac00u + (l_index * 21u + v_index) * 28u;
-    }
-    if (lhs >= 0xac00u && lhs < 0xac00u + 11172u &&
-        (lhs - 0xac00u) % 28u == 0u &&
-        rhs > 0x11a7u && rhs < 0x11a7u + 28u)
-        return lhs + (rhs - 0x11a7u);
-
-    size_t first = 0u;
-    size_t last = g_rin_unicode_composition_count;
-    while (first < last) {
-        size_t middle = first + (last - first) / 2u;
-        const RinUnicodeCompositionEntry* entry =
-            &g_rin_unicode_compositions[middle];
-        if (entry->first < lhs ||
-            (entry->first == lhs && entry->second < rhs)) {
-            first = middle + 1u;
-        } else if (entry->first > lhs || entry->second > rhs) {
-            last = middle;
-        } else {
-            return entry->composed;
-        }
-    }
-    return 0u;
-}
-
 static const RinUnicodeNormalizationDecompositionEntry*
 rin_unicode_find_normalization_decomposition(uint32_t cp,
                                               int compatibility) {
