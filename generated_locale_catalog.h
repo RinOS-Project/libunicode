@@ -24,8 +24,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "ASCII",
         {
-            ".", "", "", "", "",
-            ".", "", "", "", "-",
+            ".", ",", "", "", "",
+            ".", ",", "", "", "-",
             127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127
         }
     },
@@ -206,8 +206,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ".", "\xE2\x80\x99", "\x03", "CHF ", "CHF",
-            ".", "\xE2\x80\x99", "\x03", "", "-",
+            ",", "'", "\x03", "CHF ", "CHF",
+            ",", "'", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -232,8 +232,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", "\xC2\xA0", "\x03", "EUR ", "\xE2\x82\xAC",
-            ",", "\xC2\xA0", "\x03", "", "-",
+            ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
+            ",", ".", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -245,9 +245,9 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", "\xE2\x80\x99", "\x03", "CHF ", "CHF",
-            ",", "\xE2\x80\x99", "\x03", "", "-",
-            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+            ".", "'", "\x03", "CHF ", "CHF",
+            ".", "'", "\x03", "", "-",
+            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         }
     },
     {
@@ -260,7 +260,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", ".", "\x03", "CLP ", "$",
             ",", ".", "\x03", "", "-",
-            0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+            0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
     {
@@ -273,7 +273,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", ".", "\x03", "COP ", "$",
             ",", ".", "\x03", "", "-",
-            0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
+            0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         }
     },
     {
@@ -284,9 +284,9 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ".", "\xE2\x80\x99", "\x03", "CHF ", "CHF",
-            ".", "\xE2\x80\x99", "\x03", "", "-",
-            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+            ".", "'", "\x03", "CHF ", "CHF",
+            ".", "'", "\x03", "", "-",
+            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         }
     },
     {
@@ -299,7 +299,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
-            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         }
     },
     {
@@ -312,7 +312,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", "\xC2\xA0", "\x03", "CAD ", "$",
             ",", "\xC2\xA0", "\x03", "", "-",
-            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
     {
@@ -323,9 +323,9 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ".", "\xE2\x80\x99", "\x03", "CHF ", "CHF",
-            ".", "\xE2\x80\x99", "\x03", "", "-",
-            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+            ".", "'", "\x03", "CHF ", "CHF",
+            ".", "'", "\x03", "", "-",
+            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         }
     },
     {
@@ -338,7 +338,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", ".", "\x03", "ARS ", "$",
             ",", ".", "\x03", "", "-",
-            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         }
     },
     {
@@ -349,8 +349,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ".", ",", "\x03", "USD ", "$",
-            ".", ",", "\x03", "", "-",
+            ",", ".", "\x03", "USD ", "$",
+            ",", ".", "\x03", "", "-",
             2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
@@ -362,9 +362,9 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
-            ",", ".", "\x03", "", "-",
-            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+            ",", "\xC2\xA0", "\x03", "EUR ", "\xE2\x82\xAC",
+            ",", "\xC2\xA0", "\x03", "", "-",
+            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         }
     },
     {
@@ -375,8 +375,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
-            ",", ".", "\x03", "", "-",
+            ",", "\xE2\x80\xAF", "\x03", "EUR ", "\xE2\x82\xAC",
+            ",", "\xE2\x80\xAF", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -453,8 +453,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "EUR ", "\xE2\x82\xAC",
-            ",", " ", "\x03", "", "-",
+            ",", "\xE2\x80\xAF", "\x03", "EUR ", "\xE2\x82\xAC",
+            ",", "\xE2\x80\xAF", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -492,8 +492,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ".", ",", "\x03", "MXN ", "MX$",
-            ".", ",", "\x03", "", "-",
+            ",", ".", "\x03", "MXN ", "MX$",
+            ",", ".", "\x03", "", "-",
             2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
@@ -507,7 +507,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
-            2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
+            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
     {
@@ -531,8 +531,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
-            ",", ".", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "EUR ", "\xE2\x82\xAC",
+            ",", "\xC2\xA0", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -544,8 +544,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Cyrl",
         "UTF-8",
         {
-            ",", " ", "\x03", "RUB ", "\xE2\x82\xBD",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "RUB ", "\xE2\x82\xBD",
+            ",", "\xC2\xA0", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -557,8 +557,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Cyrl",
         "UTF-8",
         {
-            ",", " ", "\x03", "UAH ", "\xE2\x82\xB4",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "UAH ", "\xE2\x82\xB4",
+            ",", "\xC2\xA0", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -583,8 +583,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "PLN ", "z\xC5\x82",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "PLN ", "z\xC5\x82",
+            ",", "\xC2\xA0", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -609,8 +609,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "SEK ", "kr",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "SEK ", "kr",
+            ",", "\xC2\xA0", "\x03", "", "\xE2\x88\x92",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -622,8 +622,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "EUR ", "\xE2\x82\xAC",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "EUR ", "\xE2\x82\xAC",
+            ",", "\xC2\xA0", "\x03", "", "\xE2\x88\x92",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -648,8 +648,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "CZK ", "K\xC4\x8D",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "CZK ", "K\xC4\x8D",
+            ",", "\xC2\xA0", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -661,8 +661,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "HUF ", "Ft",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "HUF ", "Ft",
+            ",", "\xC2\xA0", "\x03", "", "-",
             0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -688,8 +688,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "UTF-8",
         {
             ".", ",", "\x03", "SAR ", "\xD8\xB1.\xD8\xB3",
-            ".", ",", "\x03", "", "-",
-            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            ".", ",", "\x03", "", "\xE2\x80\x8E-",
+            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
     {
@@ -700,8 +700,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Arab",
         "UTF-8",
         {
-            "\xD9\xAB", "\xD9\xAC", "\x03", "IRR ", "\xD8\xB1\xDB\x8C\xD8\xA7\xD9\x84",
-            "\xD9\xAB", "\xD9\xAC", "\x03", "", "-",
+            ".", ",", "\x03", "IRR ", "\xD8\xB1\xDB\x8C\xD8\xA7\xD9\x84",
+            ".", ",", "\x03", "", "\xE2\x80\x8E\xE2\x88\x92",
             2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
@@ -714,7 +714,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "UTF-8",
         {
             ".", ",", "\x03", "ILS ", "\xE2\x82\xAA",
-            ".", ",", "\x03", "", "-",
+            ".", ",", "\x03", "", "\xE2\x80\x8E-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -754,7 +754,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", ".", "\x03", "IDR ", "Rp",
             ",", ".", "\x03", "", "-",
-            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
     {
@@ -791,8 +791,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ".", "\xE2\x80\x99", "\x03", "CHF ", "CHF",
-            ".", "\xE2\x80\x99", "\x03", "", "-",
+            ",", "\xE2\x80\xAF", "\x03", "CHF ", "CHF",
+            ",", "\xE2\x80\xAF", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -830,8 +830,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ".", "\xE2\x80\x99", "\x03", "CHF ", "CHF",
-            ".", "\xE2\x80\x99", "\x03", "", "-",
+            ",", ".", "\x03", "CHF ", "CHF",
+            ",", ".", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -845,7 +845,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
-            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
         }
     },
     {
@@ -921,8 +921,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Cyrl",
         "UTF-8",
         {
-            ",", " ", "\x03", "RUB ", "\xE2\x82\xBD",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "RUB ", "\xE2\x82\xBD",
+            ",", "\xC2\xA0", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -934,8 +934,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Cyrl",
         "UTF-8",
         {
-            ",", " ", "\x03", "UAH ", "\xE2\x82\xB4",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "UAH ", "\xE2\x82\xB4",
+            ",", "\xC2\xA0", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -960,8 +960,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "PLN ", "z\xC5\x82",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "PLN ", "z\xC5\x82",
+            ",", "\xC2\xA0", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -973,8 +973,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "SEK ", "kr",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "SEK ", "kr",
+            ",", "\xC2\xA0", "\x03", "", "\xE2\x88\x92",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -986,8 +986,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "EUR ", "\xE2\x82\xAC",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "EUR ", "\xE2\x82\xAC",
+            ",", "\xC2\xA0", "\x03", "", "\xE2\x88\x92",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -1012,8 +1012,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "CZK ", "K\xC4\x8D",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "CZK ", "K\xC4\x8D",
+            ",", "\xC2\xA0", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -1025,8 +1025,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", " ", "\x03", "HUF ", "Ft",
-            ",", " ", "\x03", "", "-",
+            ",", "\xC2\xA0", "\x03", "HUF ", "Ft",
+            ",", "\xC2\xA0", "\x03", "", "-",
             0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -1052,8 +1052,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "UTF-8",
         {
             ".", ",", "\x03", "SAR ", "\xD8\xB1.\xD8\xB3",
-            ".", ",", "\x03", "", "-",
-            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            ".", ",", "\x03", "", "\xE2\x80\x8E-",
+            2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
     {
@@ -1064,8 +1064,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Arab",
         "UTF-8",
         {
-            "\xD9\xAB", "\xD9\xAC", "\x03", "IRR ", "\xD8\xB1\xDB\x8C\xD8\xA7\xD9\x84",
-            "\xD9\xAB", "\xD9\xAC", "\x03", "", "-",
+            ".", ",", "\x03", "IRR ", "\xD8\xB1\xDB\x8C\xD8\xA7\xD9\x84",
+            ".", ",", "\x03", "", "\xE2\x80\x8E\xE2\x88\x92",
             2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
@@ -1078,7 +1078,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "UTF-8",
         {
             ".", ",", "\x03", "ILS ", "\xE2\x82\xAA",
-            ".", ",", "\x03", "", "-",
+            ".", ",", "\x03", "", "\xE2\x80\x8E-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
     },
@@ -1118,7 +1118,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", ".", "\x03", "IDR ", "Rp",
             ",", ".", "\x03", "", "-",
-            2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+            2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
     {
