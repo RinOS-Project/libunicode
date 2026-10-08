@@ -385,7 +385,7 @@ int main(void) {
         return 140;
     if (rin_unicode_line_break_opportunity(hangul_syllables,
                                            sizeof(hangul_syllables) - 1u, 3u) !=
-        RIN_UNICODE_LINE_BREAK_ALLOWED ||
+         RIN_UNICODE_LINE_BREAK_ALLOWED ||
         rin_unicode_line_break_opportunity(
             hangul_jamo_jl_jv, sizeof(hangul_jamo_jl_jv) - 1u, 3u) !=
             RIN_UNICODE_LINE_BREAK_PROHIBITED ||
