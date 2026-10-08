@@ -167,7 +167,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ".", ",", "\x03", "HKD ", "$",
+            ".", ",", "\x03", "HKD ", "HK$",
             ".", ",", "\x03", "", "-",
             2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
@@ -401,7 +401,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Jpan",
         "UTF-8",
         {
-            ".", ",", "\x03", "JPY ", "\xC2\xA5",
+            ".", ",", "\x03", "JPY ", "\xEF\xBF\xA5",
             ".", ",", "\x03", "", "-",
             0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
@@ -492,7 +492,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", ".", "\x03", "MXN ", "MX$",
+            ",", ".", "\x03", "MXN ", "$",
             ",", ".", "\x03", "", "-",
             2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
@@ -635,7 +635,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", ".", "\x03", "DKK ", "kr",
+            ",", ".", "\x03", "DKK ", "kr.",
             ",", ".", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
@@ -687,7 +687,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Arab",
         "UTF-8",
         {
-            ".", ",", "\x03", "SAR ", "\xD8\xB1.\xD8\xB3",
+            ".", ",", "\x03", "SAR ", "\xD8\xB1.\xD8\xB3.\xE2\x80\x8F",
             ".", ",", "\x03", "", "\xE2\x80\x8E-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
@@ -702,7 +702,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ".", ",", "\x03", "IRR ", "\xD8\xB1\xDB\x8C\xD8\xA7\xD9\x84",
             ".", ",", "\x03", "", "\xE2\x80\x8E\xE2\x88\x92",
-            2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
+            0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
     {
@@ -754,7 +754,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", ".", "\x03", "IDR ", "Rp",
             ",", ".", "\x03", "", "-",
-            2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
+            0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
     {
@@ -869,7 +869,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Jpan",
         "UTF-8",
         {
-            ".", ",", "\x03", "JPY ", "\xC2\xA5",
+            ".", ",", "\x03", "JPY ", "\xEF\xBF\xA5",
             ".", ",", "\x03", "", "-",
             0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
@@ -999,7 +999,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Latn",
         "UTF-8",
         {
-            ",", ".", "\x03", "DKK ", "kr",
+            ",", ".", "\x03", "DKK ", "kr.",
             ",", ".", "\x03", "", "-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
@@ -1051,7 +1051,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Arab",
         "UTF-8",
         {
-            ".", ",", "\x03", "SAR ", "\xD8\xB1.\xD8\xB3",
+            ".", ",", "\x03", "SAR ", "\xD8\xB1.\xD8\xB3.\xE2\x80\x8F",
             ".", ",", "\x03", "", "\xE2\x80\x8E-",
             2, 2, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
         }
@@ -1066,7 +1066,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ".", ",", "\x03", "IRR ", "\xD8\xB1\xDB\x8C\xD8\xA7\xD9\x84",
             ".", ",", "\x03", "", "\xE2\x80\x8E\xE2\x88\x92",
-            2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
+            0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
     {
@@ -1118,7 +1118,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         {
             ",", ".", "\x03", "IDR ", "Rp",
             ",", ".", "\x03", "", "-",
-            2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
+            0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
     {
