@@ -427,7 +427,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Hant",
         "UTF-8",
         {
-            ".", ",", "\x03", "TWD ", "NT$",
+            ".", ",", "\x03", "TWD ", "$",
             ".", ",", "\x03", "", "-",
             2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
