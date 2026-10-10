@@ -726,8 +726,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Deva",
         "UTF-8",
         {
-            ".", ",", "\x03", "INR ", "\xE2\x82\xB9",
-            ".", ",", "\x03", "", "-",
+            ".", ",", "\x03\x02", "INR ", "\xE2\x82\xB9",
+            ".", ",", "\x03\x02", "", "-",
             2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
@@ -1090,8 +1090,8 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "Deva",
         "UTF-8",
         {
-            ".", ",", "\x03", "INR ", "\xE2\x82\xB9",
-            ".", ",", "\x03", "", "-",
+            ".", ",", "\x03\x02", "INR ", "\xE2\x82\xB9",
+            ".", ",", "\x03\x02", "", "-",
             2, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1
         }
     },
