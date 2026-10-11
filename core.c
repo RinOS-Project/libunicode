@@ -1745,7 +1745,7 @@ static int rin_unicode_iterator_next(RinUnicodeTransformIterator* it, uint32_t* 
 size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32_t* src) {
     RinUnicodeTransformIterator it;
     size_t out_len = 0u;
-    size_t source_length;
+    size_t source_length = 0u;
     size_t source_index;
     uint32_t cp = 0u;
     it.utf8 = (const char*)0;
@@ -1788,7 +1788,7 @@ size_t rin_unicode_transform_utf32(uint32_t* dest, size_t dest_cap, const uint32
 size_t rin_unicode_transform_utf8(char* dest, size_t dest_cap, const char* src) {
     RinUnicodeTransformIterator it;
     size_t out_len = 0u;
-    size_t source_length;
+    size_t source_length = 0u;
     uint32_t cp = 0u;
     it.utf8 = src;
     it.utf32 = (const uint32_t*)0;
