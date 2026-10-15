@@ -48,7 +48,14 @@ typedef enum RinUnicodeDigitSet {
     RIN_UNICODE_DIGITS_TAMIL,
     RIN_UNICODE_DIGITS_TIBETAN,
     RIN_UNICODE_DIGITS_FULLWIDTH,
-    RIN_UNICODE_DIGITS_HANIDEC
+    RIN_UNICODE_DIGITS_HANIDEC,
+    /* CLDR 48.2 numeric systems used by archive-scope locale defaults. */
+    RIN_UNICODE_DIGITS_ADLAM,
+    RIN_UNICODE_DIGITS_OL_CHIKI,
+    RIN_UNICODE_DIGITS_CHAKMA,
+    RIN_UNICODE_DIGITS_NAG_MUNDARI,
+    RIN_UNICODE_DIGITS_MEITEI_MAYEK,
+    RIN_UNICODE_DIGITS_NKO
 } RinUnicodeDigitSet;
 
 static RinUnicodeLocale const* g_locale_root = &g_rin_unicode_generated_locales[0];
@@ -299,6 +306,18 @@ static int rin_unicode_digit_set_from_token(char const* token, size_t length,
         *digit_set = RIN_UNICODE_DIGITS_FULLWIDTH;
     else if (rin_unicode_ascii_token_ieq(token, length, "hanidec"))
         *digit_set = RIN_UNICODE_DIGITS_HANIDEC;
+    else if (rin_unicode_ascii_token_ieq(token, length, "adlm"))
+        *digit_set = RIN_UNICODE_DIGITS_ADLAM;
+    else if (rin_unicode_ascii_token_ieq(token, length, "olck"))
+        *digit_set = RIN_UNICODE_DIGITS_OL_CHIKI;
+    else if (rin_unicode_ascii_token_ieq(token, length, "cakm"))
+        *digit_set = RIN_UNICODE_DIGITS_CHAKMA;
+    else if (rin_unicode_ascii_token_ieq(token, length, "hmnp"))
+        *digit_set = RIN_UNICODE_DIGITS_NAG_MUNDARI;
+    else if (rin_unicode_ascii_token_ieq(token, length, "mtei"))
+        *digit_set = RIN_UNICODE_DIGITS_MEITEI_MAYEK;
+    else if (rin_unicode_ascii_token_ieq(token, length, "nkoo"))
+        *digit_set = RIN_UNICODE_DIGITS_NKO;
     else
         return 0;
     return 1;
@@ -642,6 +661,12 @@ static int rin_unicode_locale_append_digit(
     case RIN_UNICODE_DIGITS_HANIDEC:
         text = hanidec[(unsigned)(digit - '0')];
         break;
+    case RIN_UNICODE_DIGITS_ADLAM: codepoint = 0x1e950u; break;
+    case RIN_UNICODE_DIGITS_OL_CHIKI: codepoint = 0x1c50u; break;
+    case RIN_UNICODE_DIGITS_CHAKMA: codepoint = 0x11136u; break;
+    case RIN_UNICODE_DIGITS_NAG_MUNDARI: codepoint = 0x1e140u; break;
+    case RIN_UNICODE_DIGITS_MEITEI_MAYEK: codepoint = 0xabf0u; break;
+    case RIN_UNICODE_DIGITS_NKO: codepoint = 0x07c0u; break;
     case RIN_UNICODE_DIGITS_LATIN:
         codepoint = (uint32_t)'0';
         break;
