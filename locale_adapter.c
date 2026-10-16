@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
     defined(RIN_USERSPACE) && RIN_USERSPACE
-#include "../libc/internal/rin_environment_runtime.h"
+#include "../../include/rinos/internal/rin_environment_runtime.h"
 #endif
 
 #define LC_CTYPE 0
