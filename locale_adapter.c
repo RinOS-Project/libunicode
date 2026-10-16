@@ -1,11 +1,8 @@
 #include "rin_unicode.h"
 #include "../libc/locale.h"
+#include "../libc/rin_environment.h"
 #include <generated_locale_catalog.h>
 #include <stdlib.h>
-#if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
-    defined(RIN_USERSPACE) && RIN_USERSPACE
-#include "../libc/internal/rin_environment_runtime.h"
-#endif
 
 #define LC_CTYPE 0
 #define LC_NUMERIC 1
@@ -545,9 +542,9 @@ static RinUnicodeLocale const* rin_unicode_locale_from_environment(
     RinUnicodeLocale const* selected = g_locale_root;
 #if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
     defined(RIN_USERSPACE) && RIN_USERSPACE
-    unsigned int environment_epoch;
-    char** environment = __rin_env_read_begin(&environment_epoch);
-    name = __rin_env_get_from_snapshot(environment, "LC_ALL");
+    RinEnvironmentSnapshotV1 environment_snapshot;
+    rin_environment_snapshot_begin_v1(&environment_snapshot);
+    name = rin_environment_snapshot_get_v1(&environment_snapshot, "LC_ALL");
 #else
     name = getenv("LC_ALL");
 #endif
@@ -560,7 +557,8 @@ static RinUnicodeLocale const* rin_unicode_locale_from_environment(
 #if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
     defined(RIN_USERSPACE) && RIN_USERSPACE
         name = category_name
-            ? __rin_env_get_from_snapshot(environment, category_name)
+            ? rin_environment_snapshot_get_v1(&environment_snapshot,
+                                              category_name)
             : (char const*)0;
 #else
         name = category_name ? getenv(category_name) : (char const*)0;
@@ -568,7 +566,8 @@ static RinUnicodeLocale const* rin_unicode_locale_from_environment(
         if (!name || name[0] == '\0') {
 #if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
     defined(RIN_USERSPACE) && RIN_USERSPACE
-            name = __rin_env_get_from_snapshot(environment, "LANG");
+            name = rin_environment_snapshot_get_v1(&environment_snapshot,
+                                                  "LANG");
 #else
             name = getenv("LANG");
 #endif
@@ -582,7 +581,7 @@ static RinUnicodeLocale const* rin_unicode_locale_from_environment(
     }
 #if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
     defined(RIN_USERSPACE) && RIN_USERSPACE
-    __rin_env_read_end(environment_epoch);
+    rin_environment_snapshot_end_v1(&environment_snapshot);
 #endif
     return selected;
 }
