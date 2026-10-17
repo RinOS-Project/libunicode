@@ -486,15 +486,18 @@ static RinUnicodeLocale const* rin_unicode_find_locale_base(char const* name)
 static RinUnicodeDigitSet rin_unicode_default_digit_set(
     RinUnicodeLocale const* selected)
 {
-    if (!selected) return RIN_UNICODE_DIGITS_LATIN;
-    if (rin_unicode_ascii_ieq(selected->language, "ar"))
-        return RIN_UNICODE_DIGITS_ARABIC_INDIC;
-    if (rin_unicode_ascii_ieq(selected->language, "fa"))
-        return RIN_UNICODE_DIGITS_EXTENDED_ARABIC_INDIC;
-    if (rin_unicode_ascii_ieq(selected->language, "hi"))
-        return RIN_UNICODE_DIGITS_DEVANAGARI;
-    if (rin_unicode_ascii_ieq(selected->language, "th"))
-        return RIN_UNICODE_DIGITS_THAI;
+    size_t length = 0u;
+    RinUnicodeDigitSet digit_set;
+
+    if (!selected || !selected->default_numbering_system)
+        return RIN_UNICODE_DIGITS_LATIN;
+    while (selected->default_numbering_system[length] != '\0') ++length;
+    if (rin_unicode_digit_set_from_token(selected->default_numbering_system,
+                                         length, &digit_set))
+        return digit_set;
+    /* A malformed or unsupported generated value must not select a digit
+     * range based on a language guess.  Keep the old RICUDB1/product ABI
+     * usable while failing closed to the documented latn baseline. */
     return RIN_UNICODE_DIGITS_LATIN;
 }
 

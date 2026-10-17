@@ -12,6 +12,7 @@ typedef struct RinUnicodeGeneratedLocale {
     const char* territory;
     const char* script;
     const char* codeset;
+    const char* default_numbering_system;
     rin_unicode_lconv_t lconv;
 } RinUnicodeGeneratedLocale;
 
@@ -23,6 +24,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "",
         "ASCII",
+        "latn",
         {
             ".", ",", "", "", "",
             ".", ",", "", "", "-",
@@ -36,6 +38,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "US",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "USD ", "$",
             ".", ",", "\x03", "", "-",
@@ -49,6 +52,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "GB",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "GBP ", "\xC2\xA3",
             ".", ",", "\x03", "", "-",
@@ -62,6 +66,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "IN",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03\x02", "INR ", "\xE2\x82\xB9",
             ".", ",", "\x03\x02", "", "-",
@@ -75,6 +80,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "AU",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "AUD ", "$",
             ".", ",", "\x03", "", "-",
@@ -88,6 +94,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "CA",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "CAD ", "$",
             ".", ",", "\x03", "", "-",
@@ -101,6 +108,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "NZ",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "NZD ", "$",
             ".", ",", "\x03", "", "-",
@@ -114,6 +122,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "ZA",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "ZAR ", "R",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -127,6 +136,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "IE",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "EUR ", "\xE2\x82\xAC",
             ".", ",", "\x03", "", "-",
@@ -140,6 +150,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "SG",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "SGD ", "$",
             ".", ",", "\x03", "", "-",
@@ -153,6 +164,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "PH",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "PHP ", "\xE2\x82\xB1",
             ".", ",", "\x03", "", "-",
@@ -166,6 +178,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "HK",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "HKD ", "HK$",
             ".", ",", "\x03", "", "-",
@@ -179,6 +192,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "MY",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "MYR ", "RM",
             ".", ",", "\x03", "", "-",
@@ -192,6 +206,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "NG",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "NGN ", "\xE2\x82\xA6",
             ".", ",", "\x03", "", "-",
@@ -205,6 +220,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "CH",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "'", "\x03", "CHF ", "CHF",
             ",", "'", "\x03", "", "-",
@@ -218,6 +234,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "LU",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -231,6 +248,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "LU",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -244,6 +262,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "LI",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", "'", "\x03", "CHF ", "CHF",
             ".", "'", "\x03", "", "-",
@@ -257,6 +276,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "CL",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "CLP ", "$",
             ",", ".", "\x03", "", "-",
@@ -270,6 +290,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "CO",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "COP ", "$",
             ",", ".", "\x03", "", "-",
@@ -283,6 +304,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "CH",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", "'", "\x03", "CHF ", "CHF",
             ".", "'", "\x03", "", "-",
@@ -296,6 +318,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "BE",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -309,6 +332,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "CA",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "CAD ", "$",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -322,6 +346,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "CH",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", "'", "\x03", "CHF ", "CHF",
             ".", "'", "\x03", "", "-",
@@ -335,6 +360,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "AR",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "ARS ", "$",
             ",", ".", "\x03", "", "-",
@@ -348,6 +374,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "US",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "USD ", "$",
             ",", ".", "\x03", "", "-",
@@ -361,6 +388,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "AT",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -374,6 +402,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "BE",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xE2\x80\xAF", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", "\xE2\x80\xAF", "\x03", "", "-",
@@ -387,6 +416,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "ES",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -400,6 +430,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "JP",
         "Jpan",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "JPY ", "\xEF\xBF\xA5",
             ".", ",", "\x03", "", "-",
@@ -413,6 +444,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "CN",
         "Hans",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "CNY ", "\xC2\xA5",
             ".", ",", "\x03", "", "-",
@@ -426,6 +458,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "TW",
         "Hant",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "TWD ", "$",
             ".", ",", "\x03", "", "-",
@@ -439,6 +472,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "KR",
         "Kore",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "KRW ", "\xE2\x82\xA9",
             ".", ",", "\x03", "", "-",
@@ -452,6 +486,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "FR",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xE2\x80\xAF", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", "\xE2\x80\xAF", "\x03", "", "-",
@@ -465,6 +500,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "DE",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -478,6 +514,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "ES",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -491,6 +528,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "MX",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "MXN ", "$",
             ",", ".", "\x03", "", "-",
@@ -504,6 +542,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "IT",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -517,6 +556,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "BR",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "BRL ", "R$",
             ",", ".", "\x03", "", "-",
@@ -530,6 +570,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "PT",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -543,6 +584,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "RU",
         "Cyrl",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "RUB ", "\xE2\x82\xBD",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -556,6 +598,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "UA",
         "Cyrl",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "UAH ", "\xE2\x82\xB4",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -569,6 +612,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "TR",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "TRY ", "\xE2\x82\xBA",
             ",", ".", "\x03", "", "-",
@@ -582,6 +626,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "PL",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "PLN ", "z\xC5\x82",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -595,6 +640,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "NL",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -608,6 +654,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "SE",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "SEK ", "kr",
             ",", "\xC2\xA0", "\x03", "", "\xE2\x88\x92",
@@ -621,6 +668,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "FI",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", "\xC2\xA0", "\x03", "", "\xE2\x88\x92",
@@ -634,6 +682,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "DK",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "DKK ", "kr.",
             ",", ".", "\x03", "", "-",
@@ -647,6 +696,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "CZ",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "CZK ", "K\xC4\x8D",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -660,6 +710,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "HU",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "HUF ", "Ft",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -673,6 +724,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "RO",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "RON ", "lei",
             ",", ".", "\x03", "", "-",
@@ -686,6 +738,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "SA",
         "Arab",
         "UTF-8",
+        "arab",
         {
             ".", ",", "\x03", "SAR ", "\xD8\xB1.\xD8\xB3.\xE2\x80\x8F",
             ".", ",", "\x03", "", "\xE2\x80\x8E-",
@@ -699,6 +752,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "IR",
         "Arab",
         "UTF-8",
+        "arabext",
         {
             ".", ",", "\x03", "IRR ", "\xD8\xB1\xDB\x8C\xD8\xA7\xD9\x84",
             ".", ",", "\x03", "", "\xE2\x80\x8E\xE2\x88\x92",
@@ -712,6 +766,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "IL",
         "Hebr",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "ILS ", "\xE2\x82\xAA",
             ".", ",", "\x03", "", "\xE2\x80\x8E-",
@@ -725,6 +780,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "IN",
         "Deva",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03\x02", "INR ", "\xE2\x82\xB9",
             ".", ",", "\x03\x02", "", "-",
@@ -738,6 +794,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "TH",
         "Thai",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "THB ", "\xE0\xB8\xBF",
             ".", ",", "\x03", "", "-",
@@ -751,6 +808,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "ID",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "IDR ", "Rp",
             ",", ".", "\x03", "", "-",
@@ -764,6 +822,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "VN",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "VND ", "\xE2\x82\xAB",
             ",", ".", "\x03", "", "-",
@@ -777,6 +836,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "USD ", "$",
             ".", ",", "\x03", "", "-",
@@ -790,6 +850,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xE2\x80\xAF", "\x03", "CHF ", "CHF",
             ",", "\xE2\x80\xAF", "\x03", "", "-",
@@ -803,6 +864,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -816,6 +878,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "CLP ", "$",
             ",", ".", "\x03", "", "-",
@@ -829,6 +892,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "CHF ", "CHF",
             ",", ".", "\x03", "", "-",
@@ -842,6 +906,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -855,6 +920,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", ".", "\x03", "", "-",
@@ -868,6 +934,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Jpan",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "JPY ", "\xEF\xBF\xA5",
             ".", ",", "\x03", "", "-",
@@ -881,6 +948,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Hans",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "CNY ", "\xC2\xA5",
             ".", ",", "\x03", "", "-",
@@ -894,6 +962,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Kore",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "KRW ", "\xE2\x82\xA9",
             ".", ",", "\x03", "", "-",
@@ -907,6 +976,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "BRL ", "R$",
             ",", ".", "\x03", "", "-",
@@ -920,6 +990,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Cyrl",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "RUB ", "\xE2\x82\xBD",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -933,6 +1004,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Cyrl",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "UAH ", "\xE2\x82\xB4",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -946,6 +1018,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "TRY ", "\xE2\x82\xBA",
             ",", ".", "\x03", "", "-",
@@ -959,6 +1032,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "PLN ", "z\xC5\x82",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -972,6 +1046,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "SEK ", "kr",
             ",", "\xC2\xA0", "\x03", "", "\xE2\x88\x92",
@@ -985,6 +1060,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "EUR ", "\xE2\x82\xAC",
             ",", "\xC2\xA0", "\x03", "", "\xE2\x88\x92",
@@ -998,6 +1074,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "DKK ", "kr.",
             ",", ".", "\x03", "", "-",
@@ -1011,6 +1088,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "CZK ", "K\xC4\x8D",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -1024,6 +1102,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", "\xC2\xA0", "\x03", "HUF ", "Ft",
             ",", "\xC2\xA0", "\x03", "", "-",
@@ -1037,6 +1116,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "RON ", "lei",
             ",", ".", "\x03", "", "-",
@@ -1050,6 +1130,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Arab",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "SAR ", "\xD8\xB1.\xD8\xB3.\xE2\x80\x8F",
             ".", ",", "\x03", "", "\xE2\x80\x8E-",
@@ -1063,6 +1144,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Arab",
         "UTF-8",
+        "arabext",
         {
             ".", ",", "\x03", "IRR ", "\xD8\xB1\xDB\x8C\xD8\xA7\xD9\x84",
             ".", ",", "\x03", "", "\xE2\x80\x8E\xE2\x88\x92",
@@ -1076,6 +1158,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Hebr",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "ILS ", "\xE2\x82\xAA",
             ".", ",", "\x03", "", "\xE2\x80\x8E-",
@@ -1089,6 +1172,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Deva",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03\x02", "INR ", "\xE2\x82\xB9",
             ".", ",", "\x03\x02", "", "-",
@@ -1102,6 +1186,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Thai",
         "UTF-8",
+        "latn",
         {
             ".", ",", "\x03", "THB ", "\xE0\xB8\xBF",
             ".", ",", "\x03", "", "-",
@@ -1115,6 +1200,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "IDR ", "Rp",
             ",", ".", "\x03", "", "-",
@@ -1128,6 +1214,7 @@ static RinUnicodeGeneratedLocale const g_rin_unicode_generated_locales[] = {
         "",
         "Latn",
         "UTF-8",
+        "latn",
         {
             ",", ".", "\x03", "VND ", "\xE2\x82\xAB",
             ",", ".", "\x03", "", "-",
