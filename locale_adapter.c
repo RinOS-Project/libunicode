@@ -2325,6 +2325,49 @@ const char* rin_locale_l_time_format(locale_t locobj, char conversion) {
     return names->time_format;
 }
 
+const char* rin_locale_l_codeset(locale_t locobj) {
+    const RinLocaleObjectView* view;
+    RinUnicodeLocale const* selected;
+    RinUnicodeDigitSet ignored_digits;
+    const char* name;
+    if (locobj == LC_GLOBAL_LOCALE) return rin_unicode_locale_codeset();
+    if (!locobj) return NULL;
+    view = (const RinLocaleObjectView*)locobj;
+    if (!rin_locale_object_view_valid(view)) return NULL;
+    name = rin_locale_kind_name(view->categories[LC_CTYPE]);
+    if (!name || !rin_unicode_find_locale_selection(name, &selected,
+                                                    &ignored_digits))
+        return NULL;
+    return selected->codeset;
+}
+
+const char* rin_locale_l_currency_string(locale_t locobj) {
+    static __thread char result[514];
+    struct lconv* monetary = rin_localeconv_for_locale(locobj);
+    const char* currency;
+    size_t length = 0u;
+    size_t index;
+    char marker;
+    if (!monetary) return NULL;
+    if (monetary->int_curr_symbol && monetary->int_curr_symbol[0] != '\0') {
+        marker = '.';
+        currency = monetary->int_curr_symbol;
+    } else {
+        currency = monetary->currency_symbol;
+        if (!currency || currency[0] == '\0') return "";
+        marker = monetary->p_cs_precedes ? '-' : '+';
+    }
+    if (!currency) return "";
+    while (currency[length] != '\0' && length + 2u < sizeof(result))
+        ++length;
+    if (currency[length] != '\0') return NULL;
+    result[0] = marker;
+    for (index = 0u; index < length; ++index)
+        result[index + 1u] = currency[index];
+    result[length + 1u] = '\0';
+    return result;
+}
+
 int rin_isalnum(int c) { return c >= 0 ? rin_unicode_isalnum((uint32_t)c) : 0; }
 int rin_isalpha(int c) { return c >= 0 ? rin_unicode_isalpha((uint32_t)c) : 0; }
 int rin_isblank(int c) { return c >= 0 ? rin_unicode_isblank((uint32_t)c) : 0; }
