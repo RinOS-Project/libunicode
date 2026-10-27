@@ -15,6 +15,13 @@ decomposition, composition-exclusion, and canonical-combining-class data.
 separately from `rin_unicode_database_version()`, which describes the other
 generated core property and case-fold tables.
 
+The generated core property and case-fold tables are also sourced from the
+official Unicode 17.0.0 `UnicodeData.txt`, `DerivedCoreProperties.txt`,
+`EastAsianWidth.txt`, and `CaseFolding.txt` inputs. The grapheme and line-break
+adapters below intentionally remain bounded subsets; their checked-in
+exception tables are still labeled Unicode 13.0.0 and are not evidence of full
+Unicode 17.0.0 UAX #29 or UAX #14 compatibility.
+
 The line-break adapter includes a bounded UAX #14 subset: hard breaks,
 whitespace, BA/B2 (including the two-sided EM DASH case), the dictionary BB
 stress-mark cases U+00B4/U+1FFD/U+02C8/U+02CC/U+02DF, the LB8a zero-width-
