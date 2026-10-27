@@ -614,11 +614,15 @@ static int rin_unicode_lc_all_parse(
         size_t locale_length;
         char const* digit_start;
         size_t digit_length;
+        size_t consumed;
         size_t index;
         RinUnicodeDigitSet default_digits;
 
         while (prefix[prefix_length] != '\0') ++prefix_length;
-        if (total_length < prefix_length + 1u) return 0;
+        consumed = (size_t)(cursor - value);
+        if (consumed > total_length ||
+            total_length - consumed < prefix_length + 1u)
+            return 0;
         for (index = 0u; index < prefix_length; ++index)
             if (cursor[index] != prefix[index]) return 0;
         cursor += prefix_length;
