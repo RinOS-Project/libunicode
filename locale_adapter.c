@@ -1887,6 +1887,101 @@ typedef struct RinLocaleObjectView {
 _Static_assert(sizeof(RinLocaleObjectView) == 24u,
                "locale object adapter layout drift");
 
+static __thread struct lconv g_localeconv_thread;
+
+static const char* rin_locale_kind_name(uint8_t kind)
+{
+    static const char* const names[] = {
+        NULL,
+        "C",
+        "en_US.UTF-8", "en_US",
+        "ja_JP.UTF-8", "ja_JP",
+        "de_DE.UTF-8", "de_DE",
+        "fr_FR.UTF-8", "fr_FR",
+        "es_ES.UTF-8", "es_ES",
+        "it_IT.UTF-8", "it_IT",
+        "pt_BR.UTF-8", "pt_BR",
+        "es_MX.UTF-8", "es_MX",
+        "pt_PT.UTF-8", "pt_PT"
+    };
+    return kind < sizeof(names) / sizeof(names[0]) ? names[kind] : NULL;
+}
+
+static int rin_locale_object_view_valid(const RinLocaleObjectView* view)
+{
+    uint32_t index;
+    if (!view || view->magic != UINT32_C(0x434f4c52) ||
+        view->version != UINT32_C(0x00010000))
+        return 0;
+    for (index = 0u; index < sizeof(view->reserved); ++index)
+        if (view->reserved[index] != 0u) return 0;
+    return 1;
+}
+
+static void rin_localeconv_combine(struct lconv* output,
+                                   const RinUnicodeLocale* numeric,
+                                   const RinUnicodeLocale* monetary)
+{
+    const rin_unicode_lconv_t* number = &numeric->lconv;
+    const rin_unicode_lconv_t* money = &monetary->lconv;
+    output->decimal_point = (char*)number->decimal_point;
+    output->thousands_sep = (char*)number->thousands_sep;
+    output->grouping = (char*)number->grouping;
+    output->int_curr_symbol = (char*)money->int_curr_symbol;
+    output->currency_symbol = (char*)money->currency_symbol;
+    output->mon_decimal_point = (char*)money->mon_decimal_point;
+    output->mon_thousands_sep = (char*)money->mon_thousands_sep;
+    output->mon_grouping = (char*)money->mon_grouping;
+    output->positive_sign = (char*)money->positive_sign;
+    output->negative_sign = (char*)money->negative_sign;
+    output->int_frac_digits = money->int_frac_digits;
+    output->frac_digits = money->frac_digits;
+    output->p_cs_precedes = money->p_cs_precedes;
+    output->p_sep_by_space = money->p_sep_by_space;
+    output->n_cs_precedes = money->n_cs_precedes;
+    output->n_sep_by_space = money->n_sep_by_space;
+    output->p_sign_posn = money->p_sign_posn;
+    output->n_sign_posn = money->n_sign_posn;
+    output->int_p_cs_precedes = money->int_p_cs_precedes;
+    output->int_p_sep_by_space = money->int_p_sep_by_space;
+    output->int_n_cs_precedes = money->int_n_cs_precedes;
+    output->int_n_sep_by_space = money->int_n_sep_by_space;
+    output->int_p_sign_posn = money->int_p_sign_posn;
+    output->int_n_sign_posn = money->int_n_sign_posn;
+}
+
+struct lconv* rin_localeconv_for_locale(locale_t locobj)
+{
+    const RinLocaleObjectView* view;
+    RinUnicodeLocale const* numeric = NULL;
+    RinUnicodeLocale const* monetary = NULL;
+    RinUnicodeDigitSet ignored_digits;
+
+    if (locobj == LC_GLOBAL_LOCALE) {
+        rin_unicode_locale_lock();
+        numeric = g_current_locale[LC_NUMERIC];
+        monetary = g_current_locale[LC_MONETARY];
+        rin_unicode_locale_unlock();
+    } else {
+        const char* numeric_name;
+        const char* monetary_name;
+        if (!locobj) return NULL;
+        view = (const RinLocaleObjectView*)locobj;
+        if (!rin_locale_object_view_valid(view)) return NULL;
+        numeric_name = rin_locale_kind_name(view->categories[LC_NUMERIC]);
+        monetary_name = rin_locale_kind_name(view->categories[LC_MONETARY]);
+        if (!numeric_name || !monetary_name ||
+            !rin_unicode_find_locale_selection(numeric_name, &numeric,
+                                               &ignored_digits) ||
+            !rin_unicode_find_locale_selection(monetary_name, &monetary,
+                                               &ignored_digits))
+            return NULL;
+    }
+    if (!numeric || !monetary) return NULL;
+    rin_localeconv_combine(&g_localeconv_thread, numeric, monetary);
+    return &g_localeconv_thread;
+}
+
 typedef struct RinLocaleTimeNames {
     const char* short_weekdays[7];
     const char* long_weekdays[7];
