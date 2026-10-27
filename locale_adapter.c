@@ -12,6 +12,9 @@
 #define LC_MESSAGES 5
 #define LC_ALL 6
 #define LC_MAX 7
+#define RIN_UNICODE_LC_ALL_QUERY_CAPACITY \
+    ((LC_ALL) * ((sizeof("LC_MONETARY=") - 1u) + \
+                 (RIN_UNICODE_MAX_LOCALE_NAME_BYTES - 1u) + 1u + 8u + 1u) + 1u)
 
 typedef RinUnicodeGeneratedLocale RinUnicodeLocale;
 
@@ -73,6 +76,12 @@ static RinUnicodeDigitSet g_current_digit_set[LC_MAX] = {
     RIN_UNICODE_DIGITS_LATIN,
     RIN_UNICODE_DIGITS_LATIN,
     RIN_UNICODE_DIGITS_LATIN,
+};
+static char g_lc_all_query[RIN_UNICODE_LC_ALL_QUERY_CAPACITY];
+
+static char const* const g_lc_all_category_names[LC_ALL] = {
+    "LC_CTYPE", "LC_NUMERIC", "LC_TIME", "LC_COLLATE",
+    "LC_MONETARY", "LC_MESSAGES"
 };
 
 /* The locale catalog is immutable, but the selected category pointers are
@@ -320,6 +329,38 @@ static int rin_unicode_digit_set_from_token(char const* token, size_t length,
     return 1;
 }
 
+static char const* rin_unicode_digit_set_token(RinUnicodeDigitSet digit_set)
+{
+    switch (digit_set) {
+    case RIN_UNICODE_DIGITS_LATIN: return "latn";
+    case RIN_UNICODE_DIGITS_ARABIC_INDIC: return "arab";
+    case RIN_UNICODE_DIGITS_EXTENDED_ARABIC_INDIC: return "arabext";
+    case RIN_UNICODE_DIGITS_DEVANAGARI: return "deva";
+    case RIN_UNICODE_DIGITS_THAI: return "thai";
+    case RIN_UNICODE_DIGITS_BENGALI: return "beng";
+    case RIN_UNICODE_DIGITS_GUJARATI: return "gujr";
+    case RIN_UNICODE_DIGITS_GURMUKHI: return "guru";
+    case RIN_UNICODE_DIGITS_KANNADA: return "knda";
+    case RIN_UNICODE_DIGITS_KHMER: return "khmr";
+    case RIN_UNICODE_DIGITS_LAO: return "laoo";
+    case RIN_UNICODE_DIGITS_MALAYALAM: return "mlym";
+    case RIN_UNICODE_DIGITS_MYANMAR: return "mymr";
+    case RIN_UNICODE_DIGITS_ORIYA: return "orya";
+    case RIN_UNICODE_DIGITS_TELUGU: return "telu";
+    case RIN_UNICODE_DIGITS_TAMIL: return "tamldec";
+    case RIN_UNICODE_DIGITS_TIBETAN: return "tibt";
+    case RIN_UNICODE_DIGITS_FULLWIDTH: return "fullwide";
+    case RIN_UNICODE_DIGITS_HANIDEC: return "hanidec";
+    case RIN_UNICODE_DIGITS_ADLAM: return "adlm";
+    case RIN_UNICODE_DIGITS_OL_CHIKI: return "olck";
+    case RIN_UNICODE_DIGITS_CHAKMA: return "cakm";
+    case RIN_UNICODE_DIGITS_NAG_MUNDARI: return "hmnp";
+    case RIN_UNICODE_DIGITS_MEITEI_MAYEK: return "mtei";
+    case RIN_UNICODE_DIGITS_NKO: return "nkoo";
+    default: return (char const*)0;
+    }
+}
+
 /* Parse only the supported Unicode locale-extension subset.  The base
  * locale parser intentionally remains product-catalog based, but an
  * explicit -u-nu-* request must not be silently ignored: unsupported or
@@ -515,6 +556,152 @@ static int rin_unicode_find_locale_selection(char const* name,
     return 1;
 }
 
+static int rin_unicode_lc_all_append(char* output, size_t capacity,
+                                     size_t* written, char const* text)
+{
+    size_t length = 0u;
+    size_t index;
+    if (!output || !written || !text || *written >= capacity) return 0;
+    while (text[length] != '\0') ++length;
+    if (length >= capacity - *written) return 0;
+    for (index = 0u; index < length; ++index)
+        output[(*written)++] = text[index];
+    output[*written] = '\0';
+    return 1;
+}
+
+static int rin_unicode_lc_all_append_char(char* output, size_t capacity,
+                                          size_t* written, char value)
+{
+    if (!output || !written || *written >= capacity ||
+        *written + 1u >= capacity)
+        return 0;
+    output[(*written)++] = value;
+    output[*written] = '\0';
+    return 1;
+}
+
+static int rin_unicode_lc_all_has_prefix(char const* value)
+{
+    static char const prefix[] = "LC_CTYPE=";
+    size_t index;
+    if (!value) return 0;
+    for (index = 0u; index < sizeof(prefix) - 1u; ++index) {
+        if (value[index] != prefix[index]) return 0;
+    }
+    return 1;
+}
+
+static int rin_unicode_lc_all_parse(
+    char const* value, RinUnicodeLocale const* locales[LC_ALL],
+    RinUnicodeDigitSet digit_sets[LC_ALL])
+{
+    size_t total_length;
+    size_t category;
+    char const* cursor;
+    if (!value || !locales || !digit_sets) return 0;
+    for (total_length = 0u;
+         total_length < sizeof(g_lc_all_query) && value[total_length] != '\0';
+         ++total_length) {}
+    if (total_length == 0u || total_length == sizeof(g_lc_all_query))
+        return 0;
+    cursor = value;
+
+    for (category = 0u; category < LC_ALL; ++category) {
+        char const* prefix = g_lc_all_category_names[category];
+        size_t prefix_length = 0u;
+        char locale_name[RIN_UNICODE_MAX_LOCALE_NAME_BYTES];
+        size_t locale_length;
+        char const* digit_start;
+        size_t digit_length;
+        size_t index;
+        RinUnicodeDigitSet default_digits;
+
+        while (prefix[prefix_length] != '\0') ++prefix_length;
+        if (total_length < prefix_length + 1u) return 0;
+        for (index = 0u; index < prefix_length; ++index)
+            if (cursor[index] != prefix[index]) return 0;
+        cursor += prefix_length;
+        if (*cursor++ != '=') return 0;
+
+        locale_length = 0u;
+        while (cursor[locale_length] != '\0' &&
+               cursor[locale_length] != '#' &&
+               cursor[locale_length] != ';')
+            ++locale_length;
+        if (locale_length == 0u ||
+            locale_length >= sizeof(locale_name) || cursor[locale_length] != '#')
+            return 0;
+        for (index = 0u; index < locale_length; ++index)
+            locale_name[index] = cursor[index];
+        locale_name[locale_length] = '\0';
+        cursor += locale_length + 1u;
+
+        digit_start = cursor;
+        while (*cursor != '\0' && *cursor != ';') ++cursor;
+        digit_length = (size_t)(cursor - digit_start);
+        if (!rin_unicode_digit_set_from_token(
+                digit_start, digit_length, &digit_sets[category]))
+            return 0;
+        if (category + 1u < LC_ALL) {
+            if (*cursor++ != ';') return 0;
+        } else if (*cursor != '\0') {
+            return 0;
+        }
+
+        if (!rin_unicode_find_locale_selection(
+                locale_name, &locales[category], &default_digits))
+            return 0;
+    }
+    return 1;
+}
+
+static char* rin_unicode_lc_all_query_locked(void)
+{
+    RinUnicodeLocale const* first = g_current_locale[0];
+    RinUnicodeDigitSet first_digits = g_current_digit_set[0];
+    int same_selection = first != (RinUnicodeLocale const*)0;
+    size_t category;
+    size_t written = 0u;
+
+    if (same_selection) {
+        for (category = 1u; category < LC_ALL; ++category) {
+            if (g_current_locale[category] != first ||
+                g_current_digit_set[category] != first_digits) {
+                same_selection = 0;
+                break;
+            }
+        }
+    }
+    if (same_selection && first_digits == rin_unicode_default_digit_set(first))
+        return (char*)first->name;
+
+    g_lc_all_query[0] = '\0';
+    for (category = 0u; category < LC_ALL; ++category) {
+        char const* digits = rin_unicode_digit_set_token(
+            g_current_digit_set[category]);
+        if (!g_current_locale[category] || !digits ||
+            !rin_unicode_lc_all_append(
+                g_lc_all_query, sizeof(g_lc_all_query), &written,
+                g_lc_all_category_names[category]) ||
+            !rin_unicode_lc_all_append_char(
+                g_lc_all_query, sizeof(g_lc_all_query), &written, '=') ||
+            !rin_unicode_lc_all_append(
+                g_lc_all_query, sizeof(g_lc_all_query), &written,
+                g_current_locale[category]->name) ||
+            !rin_unicode_lc_all_append_char(
+                g_lc_all_query, sizeof(g_lc_all_query), &written, '#') ||
+            !rin_unicode_lc_all_append(
+                g_lc_all_query, sizeof(g_lc_all_query), &written, digits))
+            return (char*)0;
+        if (category + 1u < LC_ALL &&
+            !rin_unicode_lc_all_append_char(
+                g_lc_all_query, sizeof(g_lc_all_query), &written, ';'))
+            return (char*)0;
+    }
+    return g_lc_all_query;
+}
+
 static RinUnicodeLocale const* rin_unicode_find_locale(char const* name)
 {
     RinUnicodeLocale const* selected;
@@ -594,10 +781,38 @@ char* rin_unicode_setlocale(int category, char const* locale)
     int i;
     RinUnicodeLocale const* selected;
     RinUnicodeDigitSet digit_set;
+    RinUnicodeLocale const* all_locales[LC_ALL];
+    RinUnicodeDigitSet all_digit_sets[LC_ALL];
+    char* result;
     if (category < 0 || category >= LC_MAX) return (char*)0;
+
+    if (locale && locale[0] != '\0') {
+        if (category == LC_ALL && rin_unicode_lc_all_has_prefix(locale)) {
+            if (!rin_unicode_lc_all_parse(
+                    locale, all_locales, all_digit_sets))
+                return (char*)0;
+            rin_unicode_locale_lock();
+            for (i = 0; i < LC_ALL; ++i) {
+                g_current_locale[i] = all_locales[i];
+                g_current_digit_set[i] = all_digit_sets[i];
+            }
+            g_current_locale[LC_ALL] = g_current_locale[LC_MESSAGES];
+            g_current_digit_set[LC_ALL] =
+                g_current_digit_set[LC_MESSAGES];
+            result = rin_unicode_lc_all_query_locked();
+            rin_unicode_locale_unlock();
+            return result;
+        }
+        if (!rin_unicode_find_locale_selection(
+                locale, &selected, &digit_set))
+            return (char*)0;
+    }
+
     rin_unicode_locale_lock();
     if (!locale) {
-        char* result = (char*)g_current_locale[category]->name;
+        result = category == LC_ALL
+            ? rin_unicode_lc_all_query_locked()
+            : (char*)g_current_locale[category]->name;
         rin_unicode_locale_unlock();
         return result;
     }
@@ -608,19 +823,17 @@ char* rin_unicode_setlocale(int category, char const* locale)
                     i, &g_current_digit_set[i]);
             g_current_locale[LC_ALL] = g_current_locale[LC_MESSAGES];
             g_current_digit_set[LC_ALL] = g_current_digit_set[LC_MESSAGES];
-            selected = g_current_locale[LC_MESSAGES];
+            result = rin_unicode_lc_all_query_locked();
             rin_unicode_locale_unlock();
-            return (char*)selected->name;
+            return result;
         }
         selected = rin_unicode_locale_from_environment(category, &digit_set);
         g_current_locale[category] = selected;
         g_current_digit_set[category] = digit_set;
+        g_current_locale[LC_ALL] = g_current_locale[LC_MESSAGES];
+        g_current_digit_set[LC_ALL] = g_current_digit_set[LC_MESSAGES];
         rin_unicode_locale_unlock();
         return (char*)selected->name;
-    }
-    if (!rin_unicode_find_locale_selection(locale, &selected, &digit_set)) {
-        rin_unicode_locale_unlock();
-        return (char*)0;
     }
     if (category == LC_ALL) {
         for (i = 0; i < LC_MAX; ++i) {
@@ -630,9 +843,13 @@ char* rin_unicode_setlocale(int category, char const* locale)
     } else {
         g_current_locale[category] = selected;
         g_current_digit_set[category] = digit_set;
+        g_current_locale[LC_ALL] = g_current_locale[LC_MESSAGES];
+        g_current_digit_set[LC_ALL] = g_current_digit_set[LC_MESSAGES];
     }
+    result = category == LC_ALL
+        ? rin_unicode_lc_all_query_locked() : (char*)selected->name;
     rin_unicode_locale_unlock();
-    return (char*)selected->name;
+    return result;
 }
 
 rin_unicode_lconv_t* rin_unicode_localeconv(void)
