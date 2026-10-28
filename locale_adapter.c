@@ -2063,8 +2063,6 @@ size_t rin_unicode_locale_format_datetime(
 
 int rin_unicode_strcoll(char const* s1, char const* s2) { return rin_unicode_compare_utf8(s1 ? s1 : "", s2 ? s2 : ""); }
 size_t rin_unicode_strxfrm(char* dest, char const* src, size_t n) { return rin_unicode_transform_utf8(dest, n, src ? src : ""); }
-int rin_unicode_wcscoll32(uint32_t const* s1, uint32_t const* s2) { return rin_unicode_compare_utf32(s1, s2); }
-size_t rin_unicode_wcsxfrm32(uint32_t* dest, uint32_t const* src, size_t n) { return rin_unicode_transform_utf32(dest, n, src); }
 
 char* rin_setlocale(int category, char const* locale) { return rin_unicode_setlocale(category, locale); }
 struct lconv* rin_localeconv(void) { return (struct lconv*)rin_unicode_localeconv(); }

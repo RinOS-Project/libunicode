@@ -1855,6 +1855,14 @@ int rin_unicode_compare_utf32(const uint32_t* lhs, const uint32_t* rhs) {
     return 0;
 }
 
+int rin_unicode_wcscoll32(const uint32_t* s1, const uint32_t* s2) {
+    return rin_unicode_compare_utf32(s1, s2);
+}
+
+size_t rin_unicode_wcsxfrm32(uint32_t* dest, const uint32_t* src, size_t n) {
+    return rin_unicode_transform_utf32(dest, n, src);
+}
+
 int rin_unicode_compare_utf8(const char* lhs, const char* rhs) {
     RinUnicodeTransformIterator a;
     RinUnicodeTransformIterator b;
