@@ -1493,6 +1493,7 @@ typedef struct RinUnicodeTimeNames {
     char const* date_time_format;
     char const* date_format;
     char const* time_format;
+    char const* time_ampm_format;
 } RinUnicodeTimeNames;
 
 static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
@@ -1502,7 +1503,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"},
         {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"},
         {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
-        {"AM", "PM"}, "%a %b %e %H:%M:%S %Y", "%m/%d/%Y", "%H:%M:%S"
+        {"AM", "PM"}, "%a %b %e %H:%M:%S %Y", "%m/%d/%Y", "%H:%M:%S", "%I:%M:%S %p"
     },
     {
         "ja", "JP",
@@ -1510,7 +1511,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"},
         {"1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"},
         {"1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"},
-        {"午前", "午後"}, "%Y年%m月%d日 %H時%M分%S秒", "%Y年%m月%d日", "%H時%M分%S秒"
+        {"午前", "午後"}, "%Y年%m月%d日 %H時%M分%S秒", "%Y年%m月%d日", "%H時%M分%S秒", "%p%I時%M分%S秒"
     },
     {
         "zh", "CN",
@@ -1518,7 +1519,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"},
         {"1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"},
         {"一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"},
-        {"上午", "下午"}, "%Y年%m月%d日 %H时%M分%S秒", "%Y年%m月%d日", "%H时%M分%S秒"
+        {"上午", "下午"}, "%Y年%m月%d日 %H时%M分%S秒", "%Y年%m月%d日", "%H时%M分%S秒", "%p%I时%M分%S秒"
     },
     {
         "zh", "TW",
@@ -1526,7 +1527,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"},
         {"1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"},
         {"一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"},
-        {"上午", "下午"}, "%Y年%m月%d日 %H時%M分%S秒", "%Y年%m月%d日", "%H時%M分%S秒"
+        {"上午", "下午"}, "%Y年%m月%d日 %H時%M分%S秒", "%Y年%m月%d日", "%H時%M分%S秒", "%p%I時%M分%S秒"
     },
     {
         "ko", "KR",
@@ -1534,7 +1535,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"},
         {"1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"},
         {"1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"},
-        {"오전", "오후"}, "%Y년 %m월 %d일 %H시 %M분 %S초", "%Y년 %m월 %d일", "%H시 %M분 %S초"
+        {"오전", "오후"}, "%Y년 %m월 %d일 %H시 %M분 %S초", "%Y년 %m월 %d일", "%H시 %M분 %S초", "%p %I시 %M분 %S초"
     },
     {
         "de", "DE",
@@ -1542,7 +1543,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"},
         {"Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"},
         {"Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"},
-        {"AM", "PM"}, "%a %e. %b %Y %H:%M:%S", "%d.%m.%Y", "%H:%M:%S"
+        {"AM", "PM"}, "%a %e. %b %Y %H:%M:%S", "%d.%m.%Y", "%H:%M:%S", "%I:%M:%S %p"
     },
     {
         "fr", "FR",
@@ -1550,7 +1551,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"},
         {"janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."},
         {"janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"},
-        {"AM", "PM"}, "%a %e %b %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S"
+        {"AM", "PM"}, "%a %e %b %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S", "%I:%M:%S %p"
     },
     {
         "es", "ES",
@@ -1558,7 +1559,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"},
         {"ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"},
         {"enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"},
-        {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S"
+        {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S", "%I:%M:%S %p"
     },
     {
         "it", "IT",
@@ -1566,7 +1567,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"},
         {"gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"},
         {"gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"},
-        {"AM", "PM"}, "%a %e %b %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S"
+        {"AM", "PM"}, "%a %e %b %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S", "%I:%M:%S %p"
     },
     {
         "pt", "BR",
@@ -1574,7 +1575,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"},
         {"jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"},
         {"janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"},
-        {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S"
+        {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S", "%I:%M:%S %p"
     },
     {
         "es", "MX",
@@ -1582,7 +1583,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"},
         {"ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"},
         {"enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"},
-        {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S"
+        {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S", "%I:%M:%S %p"
     },
     {
         "pt", "PT",
@@ -1590,7 +1591,7 @@ static RinUnicodeTimeNames const g_rin_unicode_time_names[] = {
         {"domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"},
         {"jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"},
         {"janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"},
-        {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S"
+        {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S", "%I:%M:%S %p"
     }
 };
 
@@ -1651,10 +1652,39 @@ char const* rin_unicode_locale_am_pm(int hour)
 char const* rin_unicode_locale_time_format(char conversion)
 {
     RinUnicodeTimeNames const* names;
+    RinUnicodeLocale const* locale;
     char const* result;
-    if (conversion != 'c' && conversion != 'x' && conversion != 'X')
+    size_t i;
+    if (conversion != 'c' && conversion != 'x' && conversion != 'X' &&
+        conversion != 'r')
         return NULL;
     rin_unicode_locale_lock();
+    locale = g_current_locale[LC_TIME];
+    if (conversion == 'r' && locale && locale->language[0] == '\0') {
+        result = "%I:%M:%S %p";
+        rin_unicode_locale_unlock();
+        return result;
+    }
+    if (conversion == 'r') {
+        result = "";
+        if (locale) {
+            for (i = 0u;
+                 i < sizeof(g_rin_unicode_time_names) /
+                         sizeof(g_rin_unicode_time_names[0]);
+                 ++i) {
+                names = &g_rin_unicode_time_names[i];
+                if (rin_unicode_ascii_ieq(locale->language,
+                                           names->language) &&
+                    rin_unicode_ascii_ieq(locale->territory,
+                                           names->territory)) {
+                    result = names->time_ampm_format;
+                    break;
+                }
+            }
+        }
+        rin_unicode_locale_unlock();
+        return result;
+    }
     names = rin_unicode_current_time_names_unlocked();
     if (conversion == 'c') result = names->date_time_format;
     else if (conversion == 'x') result = names->date_format;
@@ -1929,7 +1959,7 @@ static int rin_unicode_datetime_append_pattern(
             nested = "%H:%M";
             break;
         case 'r':
-            nested = "%I:%M:%S %p";
+            nested = names->time_ampm_format;
             break;
         case 'S':
             if (!rin_unicode_datetime_append_fixed(
@@ -2210,6 +2240,7 @@ typedef struct RinLocaleTimeNames {
     const char* date_time_format;
     const char* date_format;
     const char* time_format;
+    const char* time_ampm_format;
 } RinLocaleTimeNames;
 
 static const RinLocaleTimeNames rin_locale_time_c = {
@@ -2217,7 +2248,7 @@ static const RinLocaleTimeNames rin_locale_time_c = {
     {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"},
     {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"},
     {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
-    {"AM", "PM"}, "%a %b %e %H:%M:%S %Y", "%m/%d/%Y", "%H:%M:%S"
+    {"AM", "PM"}, "%a %b %e %H:%M:%S %Y", "%m/%d/%Y", "%H:%M:%S", "%I:%M:%S %p"
 };
 
 static const RinLocaleTimeNames rin_locale_time_ja = {
@@ -2225,7 +2256,7 @@ static const RinLocaleTimeNames rin_locale_time_ja = {
     {"日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"},
     {"1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"},
     {"1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"},
-    {"午前", "午後"}, "%Y年%m月%d日 %H時%M分%S秒", "%Y年%m月%d日", "%H時%M分%S秒"
+    {"午前", "午後"}, "%Y年%m月%d日 %H時%M分%S秒", "%Y年%m月%d日", "%H時%M分%S秒", "%p%I時%M分%S秒"
 };
 
 static const RinLocaleTimeNames rin_locale_time_de = {
@@ -2233,7 +2264,7 @@ static const RinLocaleTimeNames rin_locale_time_de = {
     {"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"},
     {"Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"},
     {"Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"},
-    {"AM", "PM"}, "%a %e. %b %Y %H:%M:%S", "%d.%m.%Y", "%H:%M:%S"
+    {"AM", "PM"}, "%a %e. %b %Y %H:%M:%S", "%d.%m.%Y", "%H:%M:%S", "%I:%M:%S %p"
 };
 
 static const RinLocaleTimeNames rin_locale_time_fr = {
@@ -2241,7 +2272,7 @@ static const RinLocaleTimeNames rin_locale_time_fr = {
     {"dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"},
     {"janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."},
     {"janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"},
-    {"AM", "PM"}, "%a %e %b %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S"
+    {"AM", "PM"}, "%a %e %b %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S", "%I:%M:%S %p"
 };
 
 static const RinLocaleTimeNames rin_locale_time_es = {
@@ -2249,7 +2280,7 @@ static const RinLocaleTimeNames rin_locale_time_es = {
     {"domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"},
     {"ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"},
     {"enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"},
-    {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S"
+    {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S", "%I:%M:%S %p"
 };
 
 static const RinLocaleTimeNames rin_locale_time_it = {
@@ -2257,7 +2288,7 @@ static const RinLocaleTimeNames rin_locale_time_it = {
     {"domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"},
     {"gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"},
     {"gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"},
-    {"AM", "PM"}, "%a %e %b %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S"
+    {"AM", "PM"}, "%a %e %b %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S", "%I:%M:%S %p"
 };
 
 static const RinLocaleTimeNames rin_locale_time_pt = {
@@ -2265,7 +2296,7 @@ static const RinLocaleTimeNames rin_locale_time_pt = {
     {"domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"},
     {"jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"},
     {"janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"},
-    {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S"
+    {"AM", "PM"}, "%a %e de %b de %Y %H:%M:%S", "%d/%m/%Y", "%H:%M:%S", "%I:%M:%S %p"
 };
 
 static const RinLocaleTimeNames* rin_locale_time_names_l(locale_t locobj) {
@@ -2316,11 +2347,88 @@ const char* rin_locale_l_am_pm(locale_t locobj, int hour) {
 const char* rin_locale_l_time_format(locale_t locobj, char conversion) {
     const RinLocaleTimeNames* names = rin_locale_time_names_l(locobj);
     if (locobj == LC_GLOBAL_LOCALE) return rin_locale_time_format(conversion);
-    if (!names || (conversion != 'c' && conversion != 'x' && conversion != 'X'))
+    if (!names || (conversion != 'c' && conversion != 'x' &&
+                   conversion != 'X' && conversion != 'r'))
         return NULL;
     if (conversion == 'c') return names->date_time_format;
     if (conversion == 'x') return names->date_format;
-    return names->time_format;
+    if (conversion == 'X') return names->time_format;
+    return names->time_ampm_format;
+}
+
+typedef struct RinLocaleMessageNames {
+    const char* yes_expression;
+    const char* no_expression;
+    const char* yes_string;
+    const char* no_string;
+} RinLocaleMessageNames;
+
+static RinLocaleMessageNames const rin_locale_messages_c = {
+    "^[yY]", "^[nN]", "yes", "no"
+};
+static RinLocaleMessageNames const rin_locale_messages_ja = {
+    "^はい", "^いいえ", "はい", "いいえ"
+};
+static RinLocaleMessageNames const rin_locale_messages_de = {
+    "^[jJyY]", "^[nN]", "ja", "nein"
+};
+static RinLocaleMessageNames const rin_locale_messages_fr = {
+    "^[oOyY]", "^[nN]", "oui", "non"
+};
+static RinLocaleMessageNames const rin_locale_messages_es = {
+    "^[sSyY]", "^[nN]", "sí", "no"
+};
+static RinLocaleMessageNames const rin_locale_messages_it = {
+    "^[sSyY]", "^[nN]", "sì", "no"
+};
+static RinLocaleMessageNames const rin_locale_messages_pt = {
+    "^[sSyY]", "^[nN]", "sim", "não"
+};
+static RinLocaleMessageNames const rin_locale_messages_empty = {
+    "", "", "", ""
+};
+
+const char* rin_locale_l_message(locale_t locobj, int item) {
+    const RinLocaleObjectView* view;
+    RinUnicodeLocale const* selected;
+    RinUnicodeDigitSet ignored_digits;
+    const char* name;
+    const RinLocaleMessageNames* messages;
+    if (locobj == LC_GLOBAL_LOCALE) {
+        name = rin_unicode_locale_name(LC_MESSAGES);
+    } else {
+        if (!locobj) return NULL;
+        view = (const RinLocaleObjectView*)locobj;
+        if (!rin_locale_object_view_valid(view)) return NULL;
+        name = rin_locale_kind_name(view->categories[LC_MESSAGES]);
+    }
+    if (!name || !rin_unicode_find_locale_selection(name, &selected,
+                                                    &ignored_digits))
+        return NULL;
+    if (selected->language[0] == '\0') messages = &rin_locale_messages_c;
+    else if (rin_unicode_ascii_ieq(selected->language, "en"))
+        messages = &rin_locale_messages_c;
+    else if (rin_unicode_ascii_ieq(selected->language, "ja"))
+        messages = &rin_locale_messages_ja;
+    else if (rin_unicode_ascii_ieq(selected->language, "de"))
+        messages = &rin_locale_messages_de;
+    else if (rin_unicode_ascii_ieq(selected->language, "fr"))
+        messages = &rin_locale_messages_fr;
+    else if (rin_unicode_ascii_ieq(selected->language, "es"))
+        messages = &rin_locale_messages_es;
+    else if (rin_unicode_ascii_ieq(selected->language, "it"))
+        messages = &rin_locale_messages_it;
+    else if (rin_unicode_ascii_ieq(selected->language, "pt"))
+        messages = &rin_locale_messages_pt;
+    else
+        messages = &rin_locale_messages_empty;
+    switch (item) {
+        case 0: return messages->yes_expression;
+        case 1: return messages->no_expression;
+        case 2: return messages->yes_string;
+        case 3: return messages->no_string;
+        default: return NULL;
+    }
 }
 
 const char* rin_locale_l_codeset(locale_t locobj) {
