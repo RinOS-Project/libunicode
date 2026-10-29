@@ -2136,7 +2136,7 @@ typedef struct RinLocaleObjectView {
 _Static_assert(sizeof(RinLocaleObjectView) == 24u,
                "locale object adapter layout drift");
 
-static __thread struct lconv g_localeconv_thread;
+static _Thread_local struct lconv g_localeconv_thread;
 
 static const char* rin_locale_kind_name(uint8_t kind)
 {
@@ -2448,7 +2448,7 @@ const char* rin_locale_l_codeset(locale_t locobj) {
 }
 
 const char* rin_locale_l_currency_string(locale_t locobj) {
-    static __thread char result[514];
+    static _Thread_local char result[514];
     struct lconv* monetary = rin_localeconv_for_locale(locobj);
     const char* currency;
     size_t length = 0u;
