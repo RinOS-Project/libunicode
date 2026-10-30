@@ -556,6 +556,86 @@ static int rin_unicode_find_locale_selection(char const* name,
     return 1;
 }
 
+int rin_unicode_locale_object_resolve(const char* name,
+                                      uint8_t* catalog_index_out,
+                                      uint8_t* numbering_override_out)
+{
+    RinUnicodeLocale const* selected;
+    RinUnicodeDigitSet digit_set;
+    int has_override;
+    size_t index;
+    if (catalog_index_out) *catalog_index_out = 0u;
+    if (numbering_override_out) *numbering_override_out = 0u;
+    if (!name || !catalog_index_out || !numbering_override_out ||
+        !rin_unicode_parse_numbering_system(name, &digit_set,
+                                             &has_override))
+        return 0;
+    selected = rin_unicode_find_locale_base(name);
+    if (!selected) return 0;
+    for (index = 0u; index < g_rin_unicode_generated_locale_count; ++index) {
+        if (selected != &g_rin_unicode_generated_locales[index]) continue;
+        if (index > UINT8_MAX) return 0;
+        *catalog_index_out = (uint8_t)index;
+        if (has_override) {
+            if ((unsigned)digit_set >= (unsigned)RIN_UNICODE_DIGITS_NKO + 1u)
+                return 0;
+            *numbering_override_out = (uint8_t)digit_set + 1u;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+int rin_unicode_locale_object_current(int category,
+                                      uint8_t* catalog_index_out,
+                                      uint8_t* numbering_override_out)
+{
+    RinUnicodeLocale const* selected;
+    RinUnicodeDigitSet digit_set;
+    size_t index;
+    if (catalog_index_out) *catalog_index_out = 0u;
+    if (numbering_override_out) *numbering_override_out = 0u;
+    if (category < 0 || category >= LC_ALL || !catalog_index_out ||
+        !numbering_override_out)
+        return 0;
+    rin_unicode_locale_lock();
+    selected = g_current_locale[category];
+    digit_set = g_current_digit_set[category];
+    rin_unicode_locale_unlock();
+    if (!selected ||
+        (unsigned)digit_set >= (unsigned)RIN_UNICODE_DIGITS_NKO + 1u)
+        return 0;
+    for (index = 0u; index < g_rin_unicode_generated_locale_count; ++index) {
+        if (selected != &g_rin_unicode_generated_locales[index]) continue;
+        if (index > UINT8_MAX) return 0;
+        *catalog_index_out = (uint8_t)index;
+        /* The process selection already contains the resolved digit set, so
+         * recording it explicitly preserves both defaults and overrides. */
+        *numbering_override_out = (uint8_t)digit_set + 1u;
+        return 1;
+    }
+    return 0;
+}
+
+const char* rin_unicode_locale_catalog_name(uint8_t catalog_index)
+{
+    if ((size_t)catalog_index >= g_rin_unicode_generated_locale_count)
+        return NULL;
+    return g_rin_unicode_generated_locales[catalog_index].name;
+}
+
+const char* rin_unicode_locale_catalog_codeset(uint8_t catalog_index)
+{
+    if ((size_t)catalog_index >= g_rin_unicode_generated_locale_count)
+        return NULL;
+    return g_rin_unicode_generated_locales[catalog_index].codeset;
+}
+
+int rin_unicode_locale_numbering_override_valid(uint8_t numbering_override)
+{
+    return numbering_override <= (uint8_t)RIN_UNICODE_DIGITS_NKO + 1u;
+}
+
 static int rin_unicode_lc_all_append(char* output, size_t capacity,
                                      size_t* written, char const* text)
 {
@@ -2145,7 +2225,8 @@ typedef struct RinLocaleObjectView {
     uint32_t magic;
     uint32_t version;
     uint8_t categories[6];
-    uint8_t reserved[10];
+    uint8_t numbering_overrides[6];
+    uint8_t reserved[4];
 } RinLocaleObjectView;
 
 _Static_assert(sizeof(RinLocaleObjectView) == 24u,
@@ -2168,15 +2249,23 @@ static const char* rin_locale_kind_name(uint8_t kind)
         "es_MX.UTF-8", "es_MX",
         "pt_PT.UTF-8", "pt_PT"
     };
-    return kind < sizeof(names) / sizeof(names[0]) ? names[kind] : NULL;
+    if (kind < sizeof(names) / sizeof(names[0])) return names[kind];
+    if (kind < 20u) return NULL;
+    return rin_unicode_locale_catalog_name((uint8_t)(kind - 20u));
 }
 
 static int rin_locale_object_view_valid(const RinLocaleObjectView* view)
 {
     uint32_t index;
     if (!view || view->magic != UINT32_C(0x434f4c52) ||
-        view->version != UINT32_C(0x00010000))
+        view->version != UINT32_C(0x00020000))
         return 0;
+    for (index = 0u; index < 6u; ++index) {
+        if (!rin_locale_kind_name(view->categories[index]) ||
+            !rin_unicode_locale_numbering_override_valid(
+                view->numbering_overrides[index]))
+            return 0;
+    }
     for (index = 0u; index < sizeof(view->reserved); ++index)
         if (view->reserved[index] != 0u) return 0;
     return 1;
@@ -2316,17 +2405,19 @@ static const RinLocaleTimeNames rin_locale_time_pt = {
 
 static const RinLocaleTimeNames* rin_locale_time_names_l(locale_t locobj) {
     const RinLocaleObjectView* view;
+    RinUnicodeLocale const* selected;
+    RinUnicodeDigitSet ignored_digits;
+    const char* name;
     uint8_t kind;
-    uint32_t index;
     if (locobj == LC_GLOBAL_LOCALE) return NULL;
     if (!locobj) return NULL;
     view = (const RinLocaleObjectView*)locobj;
-    if (view->magic != UINT32_C(0x434f4c52) ||
-        view->version != UINT32_C(0x00010000)) return NULL;
-    for (index = 0u; index < sizeof(view->reserved); ++index)
-        if (view->reserved[index] != 0u) return NULL;
+    if (!rin_locale_object_view_valid(view)) return NULL;
     kind = view->categories[LC_TIME];
-    if (kind < 1u || kind > 19u) return NULL;
+    name = rin_locale_kind_name(kind);
+    if (!name || !rin_unicode_find_locale_selection(name, &selected,
+                                                    &ignored_digits))
+        return NULL;
     if (kind == 4u || kind == 5u) return &rin_locale_time_ja;
     if (kind == 6u || kind == 7u) return &rin_locale_time_de;
     if (kind == 8u || kind == 9u) return &rin_locale_time_fr;
@@ -2335,6 +2426,20 @@ static const RinLocaleTimeNames* rin_locale_time_names_l(locale_t locobj) {
     if (kind == 14u || kind == 15u) return &rin_locale_time_pt;
     if (kind == 16u || kind == 17u) return &rin_locale_time_es;
     if (kind == 18u || kind == 19u) return &rin_locale_time_pt;
+    if (kind >= 20u) {
+        if (rin_unicode_ascii_ieq(selected->language, "ja"))
+            return &rin_locale_time_ja;
+        if (rin_unicode_ascii_ieq(selected->language, "de"))
+            return &rin_locale_time_de;
+        if (rin_unicode_ascii_ieq(selected->language, "fr"))
+            return &rin_locale_time_fr;
+        if (rin_unicode_ascii_ieq(selected->language, "es"))
+            return &rin_locale_time_es;
+        if (rin_unicode_ascii_ieq(selected->language, "it"))
+            return &rin_locale_time_it;
+        if (rin_unicode_ascii_ieq(selected->language, "pt"))
+            return &rin_locale_time_pt;
+    }
     return &rin_locale_time_c;
 }
 

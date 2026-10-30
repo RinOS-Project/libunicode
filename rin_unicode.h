@@ -246,6 +246,18 @@ const char* rin_unicode_locale_name(int category);
  * on failure. */
 int rin_unicode_locale_canonicalize(const char* locale, char* output,
                                     size_t output_capacity);
+/* Internal locale_t bridge. Resolve a supported locale name to the immutable
+ * catalog entry and an optional explicit numbering-system override. Catalog
+ * indices are zero-based; numbering_override is zero for the catalog default
+ * and otherwise the digit-set enum plus one. */
+int rin_unicode_locale_object_resolve(const char* locale,
+                                      uint8_t* catalog_index,
+                                      uint8_t* numbering_override);
+int rin_unicode_locale_object_current(int category, uint8_t* catalog_index,
+                                      uint8_t* numbering_override);
+const char* rin_unicode_locale_catalog_name(uint8_t catalog_index);
+const char* rin_unicode_locale_catalog_codeset(uint8_t catalog_index);
+int rin_unicode_locale_numbering_override_valid(uint8_t numbering_override);
 const char* rin_unicode_locale_environment_value(int category);
 const char* rin_unicode_locale_language(void);
 const char* rin_unicode_locale_territory(void);
