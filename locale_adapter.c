@@ -728,12 +728,15 @@ static char const* rin_unicode_locale_environment_name(int category)
     }
 }
 
-static RinUnicodeLocale const* rin_unicode_locale_from_environment(
-    int category, RinUnicodeDigitSet* digit_set_out)
+static int rin_unicode_locale_from_environment(
+    int category, RinUnicodeLocale const** selected_out,
+    RinUnicodeDigitSet* digit_set_out)
 {
     char const* name;
     char const* category_name;
     RinUnicodeLocale const* selected = g_locale_root;
+    RinUnicodeDigitSet digit_set = RIN_UNICODE_DIGITS_LATIN;
+    int valid = 1;
 #if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
     defined(RIN_USERSPACE) && RIN_USERSPACE
     RinEnvironmentSnapshotV1 environment_snapshot;
@@ -743,9 +746,7 @@ static RinUnicodeLocale const* rin_unicode_locale_from_environment(
     name = getenv("LC_ALL");
 #endif
     if (name && name[0] != '\0') {
-        if (!rin_unicode_find_locale_selection(name, &selected, digit_set_out) &&
-            digit_set_out)
-            *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
+        valid = rin_unicode_find_locale_selection(name, &selected, &digit_set);
     } else {
         category_name = rin_unicode_locale_environment_name(category);
 #if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
@@ -767,17 +768,21 @@ static RinUnicodeLocale const* rin_unicode_locale_from_environment(
 #endif
         }
         if (!name || name[0] == '\0') {
-            if (digit_set_out) *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
-        } else if (!rin_unicode_find_locale_selection(
-                       name, &selected, digit_set_out) && digit_set_out) {
-            *digit_set_out = RIN_UNICODE_DIGITS_LATIN;
+            selected = g_locale_root;
+            digit_set = RIN_UNICODE_DIGITS_LATIN;
+        } else {
+            valid = rin_unicode_find_locale_selection(name, &selected,
+                                                       &digit_set);
         }
     }
 #if defined(RIN_FREESTANDING) && RIN_FREESTANDING && \
     defined(RIN_USERSPACE) && RIN_USERSPACE
     rin_environment_snapshot_end_v1(&environment_snapshot);
 #endif
-    return selected;
+    if (!valid) return 0;
+    if (selected_out) *selected_out = selected;
+    if (digit_set_out) *digit_set_out = digit_set;
+    return 1;
 }
 
 char* rin_unicode_setlocale(int category, char const* locale)
@@ -812,8 +817,8 @@ char* rin_unicode_setlocale(int category, char const* locale)
             return (char*)0;
     }
 
-    rin_unicode_locale_lock();
     if (!locale) {
+        rin_unicode_locale_lock();
         result = category == LC_ALL
             ? rin_unicode_lc_all_query_locked()
             : (char*)g_current_locale[category]->name;
@@ -823,15 +828,24 @@ char* rin_unicode_setlocale(int category, char const* locale)
     if (locale[0] == '\0') {
         if (category == LC_ALL) {
             for (i = 0; i < LC_ALL; ++i)
-                g_current_locale[i] = rin_unicode_locale_from_environment(
-                    i, &g_current_digit_set[i]);
+                if (!rin_unicode_locale_from_environment(
+                        i, &all_locales[i], &all_digit_sets[i]))
+                    return (char*)0;
+            rin_unicode_locale_lock();
+            for (i = 0; i < LC_ALL; ++i) {
+                g_current_locale[i] = all_locales[i];
+                g_current_digit_set[i] = all_digit_sets[i];
+            }
             g_current_locale[LC_ALL] = g_current_locale[LC_MESSAGES];
             g_current_digit_set[LC_ALL] = g_current_digit_set[LC_MESSAGES];
             result = rin_unicode_lc_all_query_locked();
             rin_unicode_locale_unlock();
             return result;
         }
-        selected = rin_unicode_locale_from_environment(category, &digit_set);
+        if (!rin_unicode_locale_from_environment(category, &selected,
+                                                  &digit_set))
+            return (char*)0;
+        rin_unicode_locale_lock();
         g_current_locale[category] = selected;
         g_current_digit_set[category] = digit_set;
         g_current_locale[LC_ALL] = g_current_locale[LC_MESSAGES];
@@ -839,6 +853,7 @@ char* rin_unicode_setlocale(int category, char const* locale)
         rin_unicode_locale_unlock();
         return (char*)selected->name;
     }
+    rin_unicode_locale_lock();
     if (category == LC_ALL) {
         for (i = 0; i < LC_MAX; ++i) {
             g_current_locale[i] = selected;
@@ -1425,11 +1440,11 @@ int rin_unicode_locale_canonicalize(char const* locale, char* output,
 
 char const* rin_unicode_locale_environment_value(int category)
 {
-    RinUnicodeLocale const* selected;
+    RinUnicodeLocale const* selected = (RinUnicodeLocale const*)0;
     if (category < 0 || category >= LC_ALL) return (char const*)0;
-    rin_unicode_locale_lock();
-    selected = rin_unicode_locale_from_environment(category, (RinUnicodeDigitSet*)0);
-    rin_unicode_locale_unlock();
+    if (!rin_unicode_locale_from_environment(category, &selected,
+                                              (RinUnicodeDigitSet*)0))
+        return (char const*)0;
     return selected->name;
 }
 
