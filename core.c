@@ -1373,7 +1373,14 @@ int rin_unicode_islower(uint32_t cp) {
     return rin_unicode_in_range(
         cp, g_rin_unicode_lower_ranges, g_rin_unicode_lower_range_count);
 }
-int rin_unicode_isprint(uint32_t cp) { return rin_unicode_is_valid_scalar(cp) && !rin_unicode_iscntrl(cp); }
+/* Noncharacters (FDD0-FDEF plus FFFE/FFFF of every plane) are valid
+ * scalars for conversion but never printable (glibc/UCRT/ICU agree).
+ * Unassigned (Cn) printability stays open in LIBC-WCHAR-CTYPE-FORMULA. */
+static int rin_unicode_is_noncharacter(uint32_t cp) {
+    if (cp >= 0xFDD0u && cp <= 0xFDEFu) return 1;
+    return cp <= 0x10FFFFu && (cp & 0xFFFEu) == 0xFFFEu;
+}
+int rin_unicode_isprint(uint32_t cp) { return rin_unicode_is_valid_scalar(cp) && !rin_unicode_iscntrl(cp) && !rin_unicode_is_noncharacter(cp); }
 int rin_unicode_isgraph(uint32_t cp) { return rin_unicode_isprint(cp) && !rin_unicode_isspace(cp); }
 int rin_unicode_ispunct(uint32_t cp) { return rin_unicode_isgraph(cp) && !rin_unicode_isalnum(cp); }
 
@@ -1910,7 +1917,9 @@ int rin_unicode_mbsinit(const rin_unicode_mbstate_t* ps) {
 }
 
 size_t rin_unicode_mbrtowc32(uint32_t* out_wc, const char* s, size_t n, rin_unicode_mbstate_t* ps) {
-    rin_unicode_mbstate_t local_state;
+    /* POSIX gives a NULL ps an internal static state that persists
+     * across calls (split feeds must resume). */
+    static rin_unicode_mbstate_t internal_state = {0u, 0u};
     uint32_t partial = 0u;
     uint32_t min_value = 0u;
     size_t total_expected = 0u;
@@ -1918,13 +1927,11 @@ size_t rin_unicode_mbrtowc32(uint32_t* out_wc, const char* s, size_t n, rin_unic
     size_t seen = 0u;
     size_t i;
     if (!ps) {
-        rin_unicode_reset_state(&local_state);
-        ps = &local_state;
+        ps = &internal_state;
     }
-    if (!s) {
-        rin_unicode_reset_state(ps);
-        return 0u;
-    }
+    /* POSIX: a NULL source is equivalent to an empty string (which
+     * completes fresh to 0 but fails mid-sequence with -1). */
+    if (!s) s = "";
     if (n == 0u) return (size_t)-2;
     if (ps->state == 0u) {
         if ((unsigned char)s[0] == 0u) {
@@ -1983,12 +1990,16 @@ size_t rin_unicode_mbrlen(const char* s, size_t n, rin_unicode_mbstate_t* ps) {
 
 size_t rin_unicode_wcrtomb32(char* dest, uint32_t wc, rin_unicode_mbstate_t* ps) {
     size_t written = 0u;
+    char scratch[4];
     (void)ps;
-    /* Rin's UTF-8 encoding is state-independent.  The C wcrtomb contract
-     * therefore returns zero for a NULL destination (state reset/query), not
-     * a fabricated one-byte result.  A non-NULL destination still receives
-     * the exact encoded scalar length. */
-    if (!dest) return 0u;
+    /* POSIX wcrtomb(NULL, wc, ps) measures the shift-reset+NUL
+     * sequence (1 byte for stateless UTF-8), matching the userspace
+     * locale path and glibc. */
+    if (!dest) {
+        if (rin_unicode_encode_utf8(scratch, 4u, 0u, &written) !=
+            RIN_UNICODE_OK) return (size_t)-1;
+        return written;
+    }
     if (rin_unicode_encode_utf8(dest, 4u, wc, &written) != RIN_UNICODE_OK) return (size_t)-1;
     return written;
 }
@@ -1999,6 +2010,9 @@ int rin_unicode_mbtowc32(uint32_t* out_wc, const char* s, size_t n) {
     rin_unicode_reset_state(&st);
     if (!s) return 0;
     rc = rin_unicode_mbrtowc32(out_wc, s, n, &st);
+    /* POSIX mbtowc (unlike restartable mbrtowc) reports only 0/N/-1:
+     * truncated input collapses to -1 with EILSEQ; there is no state
+     * to resume a -2 with. */
     if (rc == (size_t)-1 || rc == (size_t)-2) return -1;
     return (int)rc;
 }
